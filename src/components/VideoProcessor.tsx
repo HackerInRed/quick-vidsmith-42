@@ -9,6 +9,8 @@ interface VideoSource {
   type: 'url' | 'file';
   source: string | File;
   query: string;
+  aspectRatio: '1:1' | '16:9' | '9:16';
+  captions: boolean;
 }
 
 interface ApiResponse {
@@ -43,6 +45,8 @@ const VideoProcessor: React.FC = () => {
       const formData = new FormData();
       formData.append('type', data.type);
       formData.append('query', data.query || '');
+      formData.append('aspectRatio', data.aspectRatio);
+      formData.append('captions', data.captions.toString());
       
       if (data.type === 'url') {
         formData.append('url', data.source as string);
@@ -112,6 +116,10 @@ const VideoProcessor: React.FC = () => {
     setProcessedVideoUrl(null);
     
     toast.info('Starting video processing...');
+    console.log('Processing with options:', {
+      aspectRatio: data.aspectRatio,
+      captions: data.captions
+    });
     
     try {
       // Make the actual API call

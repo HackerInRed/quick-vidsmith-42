@@ -1,11 +1,21 @@
 
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Link2, Upload, PlayCircle } from 'lucide-react';
+import { Link2, Upload, PlayCircle, Ratio, Captions } from 'lucide-react';
 import { Textarea } from "./ui/textarea";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
+import { FormControl, FormItem, FormLabel } from "./ui/form";
 
 interface VideoInputProps {
-  onVideoSubmit: (data: { type: 'url' | 'file', source: string | File, query: string }) => void;
+  onVideoSubmit: (data: { 
+    type: 'url' | 'file', 
+    source: string | File, 
+    query: string,
+    aspectRatio: '1:1' | '16:9' | '9:16',
+    captions: boolean
+  }) => void;
   isProcessing: boolean;
 }
 
@@ -14,6 +24,8 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
   const [videoUrl, setVideoUrl] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [userQuery, setUserQuery] = useState('');
+  const [aspectRatio, setAspectRatio] = useState<'1:1' | '16:9' | '9:16'>('16:9');
+  const [enableCaptions, setEnableCaptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -27,7 +39,9 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
     onVideoSubmit({ 
       type: 'url', 
       source: videoUrl,
-      query: userQuery 
+      query: userQuery,
+      aspectRatio,
+      captions: enableCaptions
     });
   };
 
@@ -51,7 +65,9 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
     onVideoSubmit({ 
       type: 'file', 
       source: selectedFile,
-      query: userQuery 
+      query: userQuery,
+      aspectRatio,
+      captions: enableCaptions
     });
   };
 
@@ -112,6 +128,49 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
             className="glass-input w-full min-h-[80px] text-white bg-vidsmith-muted/30 border-vidsmith-border"
             value={userQuery}
             onChange={(e) => setUserQuery(e.target.value)}
+            disabled={isProcessing}
+          />
+        </div>
+
+        {/* Aspect Ratio Selector */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Ratio size={16} className="text-gray-300" />
+            <label className="block text-sm text-gray-300">
+              Aspect Ratio
+            </label>
+          </div>
+          <RadioGroup 
+            value={aspectRatio} 
+            onValueChange={(value) => setAspectRatio(value as '1:1' | '16:9' | '9:16')}
+            className="flex space-x-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="1:1" id="ratio-square" disabled={isProcessing} />
+              <Label htmlFor="ratio-square" className="text-gray-300">1:1 (Square)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="16:9" id="ratio-landscape" disabled={isProcessing} />
+              <Label htmlFor="ratio-landscape" className="text-gray-300">16:9 (Landscape)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="9:16" id="ratio-portrait" disabled={isProcessing} />
+              <Label htmlFor="ratio-portrait" className="text-gray-300">9:16 (Portrait)</Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {/* Captions Toggle */}
+        <div className="flex items-center space-x-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Captions size={16} className="text-gray-300" />
+            <label className="text-sm text-gray-300">
+              Generate Captions
+            </label>
+          </div>
+          <Switch
+            checked={enableCaptions}
+            onCheckedChange={setEnableCaptions}
             disabled={isProcessing}
           />
         </div>
