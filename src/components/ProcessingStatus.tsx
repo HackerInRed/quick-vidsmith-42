@@ -21,6 +21,19 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ progress, stage, is
     return () => clearInterval(interval);
   }, [isComplete]);
 
+  // Map processing stages to more user-friendly descriptions
+  const getStageDescription = (stage: string) => {
+    if (stage.includes("Analyzing")) return "Analyzing video content";
+    if (stage.includes("Transcribing")) return "Transcribing audio";
+    if (stage.includes("Finding")) return "Finding relevant clips";
+    if (stage.includes("Editing")) return "Editing video segments";
+    if (stage.includes("caption")) return "Generating captions";
+    if (stage.includes("Rendering")) return "Rendering final video";
+    if (stage.includes("Uploading")) return "Uploading audio for processing";
+    if (stage.includes("Extract")) return "Extracting audio from video";
+    return stage;
+  };
+
   return (
     <div className="glass-panel p-6 max-w-xl mx-auto">
       <div className="flex items-center justify-between mb-4">
@@ -47,9 +60,13 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ progress, stage, is
             Processing complete
           </span>
         ) : (
-          <span>
-            {stage}{dots}
-          </span>
+          <div>
+            <span className="font-medium">{getStageDescription(stage)}</span>
+            <span>{dots}</span>
+            <p className="text-xs mt-1 text-gray-400">
+              This may take a few minutes depending on video length
+            </p>
+          </div>
         )}
       </div>
     </div>

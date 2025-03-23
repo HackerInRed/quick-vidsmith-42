@@ -22,13 +22,13 @@ const Index = () => {
               Upload any video or paste a URL and our AI will generate engaging clips optimized for social media.
             </p>
             
-            <Link to="/upload" className="inline-block">
+            <Link to="/upload">
               <Button 
                 size="lg" 
-                className="group bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md transition-all duration-300 transform hover:scale-105 hover:shadow-glow animate-pulse"
+                className="bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md"
               >
                 Get Started 
-                <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="ml-2" />
               </Button>
             </Link>
           </div>
@@ -144,10 +144,10 @@ const Index = () => {
             <Link to="/upload">
               <Button 
                 size="lg" 
-                className="group bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md transition-all duration-300 transform hover:scale-105"
+                className="bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md"
               >
                 Get Started Now
-                <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="ml-2" />
               </Button>
             </Link>
           </div>
