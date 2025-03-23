@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Link2, Upload, PlayCircle, Square, Rectangle, RectangleVertical, Captions } from 'lucide-react';
+import { Link2, Upload, PlayCircle, Square, Smartphone, MonitorLandscape, Captions } from 'lucide-react';
 import { Textarea } from "./ui/textarea";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
@@ -154,7 +154,7 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
             
             <div className="flex flex-col items-center">
               <div className={`w-16 h-16 rounded-md mb-2 flex items-center justify-center ${aspectRatio === '16:9' ? 'bg-vidsmith-accent text-white' : 'bg-vidsmith-muted/50 text-gray-400'} transition-colors`}>
-                <Rectangle className="w-12 h-8" />
+                <MonitorLandscape className="w-12 h-8" />
               </div>
               <div className="flex items-center">
                 <RadioGroupItem value="16:9" id="ratio-landscape" disabled={isProcessing} className="mr-2" />
@@ -164,7 +164,7 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
             
             <div className="flex flex-col items-center">
               <div className={`w-16 h-16 rounded-md mb-2 flex items-center justify-center ${aspectRatio === '9:16' ? 'bg-vidsmith-accent text-white' : 'bg-vidsmith-muted/50 text-gray-400'} transition-colors`}>
-                <RectangleVertical className="w-8 h-12" />
+                <Smartphone className="w-8 h-12" />
               </div>
               <div className="flex items-center">
                 <RadioGroupItem value="9:16" id="ratio-portrait" disabled={isProcessing} className="mr-2" />
