@@ -11,7 +11,7 @@ const Logo: React.FC = () => {
         </div>
       </div>
       <span className="text-xl font-bold tracking-tight">
-        <span className="text-vidsmith-accent">CreA</span>Itive
+        <span className="text-vidsmith-accent">Vid</span>Smith
       </span>
     </div>
   );
