@@ -1,9 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Link2, Upload, PlayCircle, Ratio, Captions } from 'lucide-react';
+import { Link2, Upload, PlayCircle, Smartphone, Monitor, Square, Captions } from 'lucide-react';
 import { Textarea } from "./ui/textarea";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { FormControl, FormItem, FormLabel } from "./ui/form";
@@ -97,6 +96,37 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
     }
   };
 
+  // Aspect ratio visualization styles
+  const aspectRatioOptionStyles = (value: '1:1' | '16:9' | '9:16') => {
+    return `relative flex flex-col items-center cursor-pointer p-3 rounded-lg border transition-all
+      ${aspectRatio === value 
+        ? 'border-vidsmith-accent bg-vidsmith-accent/10' 
+        : 'border-vidsmith-border bg-vidsmith-muted/20 hover:bg-vidsmith-muted/30'}`;
+  };
+
+  const renderAspectRatioIcon = (value: '1:1' | '16:9' | '9:16') => {
+    switch (value) {
+      case '1:1':
+        return (
+          <div className="w-12 h-12 flex items-center justify-center border-2 border-current rounded">
+            <Square className="w-8 h-8" />
+          </div>
+        );
+      case '16:9':
+        return (
+          <div className="w-16 h-9 flex items-center justify-center border-2 border-current rounded">
+            <Monitor className="w-10 h-6" />
+          </div>
+        );
+      case '9:16':
+        return (
+          <div className="w-9 h-16 flex items-center justify-center border-2 border-current rounded">
+            <Smartphone className="w-5 h-10" />
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="w-full max-w-xl mx-auto">
       <div className="flex justify-center space-x-4 mb-6">
@@ -132,32 +162,39 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
           />
         </div>
 
-        {/* Aspect Ratio Selector */}
+        {/* Visual Aspect Ratio Selector */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Ratio size={16} className="text-gray-300" />
-            <label className="block text-sm text-gray-300">
-              Aspect Ratio
-            </label>
+          <label className="block text-sm text-gray-300 mb-3">
+            Aspect Ratio
+          </label>
+          <div className="grid grid-cols-3 gap-4">
+            <div 
+              className={aspectRatioOptionStyles('1:1')}
+              onClick={() => setAspectRatio('1:1')}
+            >
+              {renderAspectRatioIcon('1:1')}
+              <span className="mt-2 text-sm text-gray-300">1:1</span>
+              <span className="text-xs text-gray-400">Square</span>
+            </div>
+            
+            <div 
+              className={aspectRatioOptionStyles('16:9')}
+              onClick={() => setAspectRatio('16:9')}
+            >
+              {renderAspectRatioIcon('16:9')}
+              <span className="mt-2 text-sm text-gray-300">16:9</span>
+              <span className="text-xs text-gray-400">Landscape</span>
+            </div>
+            
+            <div 
+              className={aspectRatioOptionStyles('9:16')}
+              onClick={() => setAspectRatio('9:16')}
+            >
+              {renderAspectRatioIcon('9:16')}
+              <span className="mt-2 text-sm text-gray-300">9:16</span>
+              <span className="text-xs text-gray-400">Portrait</span>
+            </div>
           </div>
-          <RadioGroup 
-            value={aspectRatio} 
-            onValueChange={(value) => setAspectRatio(value as '1:1' | '16:9' | '9:16')}
-            className="flex space-x-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="1:1" id="ratio-square" disabled={isProcessing} />
-              <Label htmlFor="ratio-square" className="text-gray-300">1:1 (Square)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="16:9" id="ratio-landscape" disabled={isProcessing} />
-              <Label htmlFor="ratio-landscape" className="text-gray-300">16:9 (Landscape)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="9:16" id="ratio-portrait" disabled={isProcessing} />
-              <Label htmlFor="ratio-portrait" className="text-gray-300">9:16 (Portrait)</Label>
-            </div>
-          </RadioGroup>
         </div>
 
         {/* Captions Toggle */}
