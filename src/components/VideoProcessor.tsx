@@ -13,10 +13,9 @@ interface VideoSource {
   captions: boolean;
 }
 
-interface ApiResponse {
-  success: boolean;
-  videoUrl?: string;
-  error?: string;
+interface ApiStatus {
+  isConnected: boolean;
+  message: string;
 }
 
 const VideoProcessor: React.FC = () => {
@@ -25,37 +24,122 @@ const VideoProcessor: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [processingStage, setProcessingStage] = useState('Initializing');
   const [processedVideoUrl, setProcessedVideoUrl] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [apiStatus, setApiStatus] = useState<ApiStatus>({
+    isConnected: false,
+    message: 'Checking backend connection...'
+  });
   
-  // Processing stages with realistic timing
-  const processingStages = [
-    'Initializing',
-    'Analyzing video content',
-    'Identifying key moments',
-    'Generating clips',
-    'Applying optimizations',
-    'Finalizing output'
-  ];
+  const API_BASE_URL = 'http://localhost:8000'; // Change this to your actual backend URL
 
-  // Make API call to your endpoint
-  const processVideoWithApi = async (data: VideoSource) => {
-    const API_ENDPOINT = 'YOUR_API_ENDPOINT_HERE'; // Replace with your actual API endpoint
+  // Check API connection on component mount
+  useEffect(() => {
+    const checkApiConnection = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/`);
+        if (response.ok) {
+          setApiStatus({
+            isConnected: true,
+            message: 'Connected to backend'
+          });
+        } else {
+          setApiStatus({
+            isConnected: false,
+            message: 'Backend is unavailable'
+          });
+        }
+      } catch (error) {
+        setApiStatus({
+          isConnected: false,
+          message: 'Cannot connect to backend'
+        });
+      }
+    };
+
+    checkApiConnection();
+  }, []);
+
+  // Poll job status
+  useEffect(() => {
+    let intervalId: number;
+
+    if (jobId && isProcessing) {
+      intervalId = window.setInterval(async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/status/${jobId}`);
+          
+          if (!response.ok) {
+            console.error('Error fetching job status:', response.statusText);
+            return;
+          }
+
+          const data = await response.json();
+          
+          // Update progress based on status
+          setProgress(Math.round(data.progress * 100));
+          setProcessingStage(data.message || 'Processing video...');
+
+          // Check if processing is complete
+          if (data.status === 'completed' && data.output_video) {
+            clearInterval(intervalId);
+            setIsProcessing(false);
+            setProgress(100);
+            // Construct the full URL for the video
+            const videoUrl = `${API_BASE_URL}${data.output_video}`;
+            setProcessedVideoUrl(videoUrl);
+            toast.success('Video processing complete!');
+          }
+          
+          // Check if processing failed
+          if (data.status === 'failed') {
+            clearInterval(intervalId);
+            setIsProcessing(false);
+            toast.error(`Processing failed: ${data.error || 'Unknown error'}`);
+          }
+        } catch (error) {
+          console.error('Error polling job status:', error);
+        }
+      }, 2000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [jobId, isProcessing, API_BASE_URL]);
+
+  const handleVideoSubmit = async (data: VideoSource) => {
+    setVideoSource(data);
+    setIsProcessing(true);
+    setProgress(0);
+    setProcessingStage('Initializing');
+    setProcessedVideoUrl(null);
+    setJobId(null);
+    
+    toast.info('Starting video processing...');
     
     try {
       // Create form data for sending to API
       const formData = new FormData();
-      formData.append('type', data.type);
-      formData.append('query', data.query || '');
-      formData.append('aspectRatio', data.aspectRatio);
-      formData.append('captions', data.captions.toString());
+      formData.append('prompt', data.query || 'Extract interesting parts');
+      
+      // Map aspect ratio to backend format
+      const backendAspectRatio = 
+        data.aspectRatio === '1:1' ? 'square' : 
+        data.aspectRatio === '9:16' ? 'reel' : 'youtube';
+      
+      formData.append('aspect_ratio', backendAspectRatio);
+      formData.append('burn_captions', data.captions.toString());
       
       if (data.type === 'url') {
-        formData.append('url', data.source as string);
+        formData.append('video_url', data.source as string);
       } else {
-        formData.append('file', data.source as File);
+        formData.append('video', data.source as File);
       }
       
-      // Make the API call
-      const response = await fetch(API_ENDPOINT, {
+      // Call the API to start processing
+      const response = await fetch(`${API_BASE_URL}/process`, {
         method: 'POST',
         body: formData,
       });
@@ -64,76 +148,11 @@ const VideoProcessor: React.FC = () => {
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
       
-      const result: ApiResponse = await response.json();
+      const result = await response.json();
+      setJobId(result.job_id);
       
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to process video');
-      }
-      
-      // Return the processed video URL
-      return result.videoUrl;
     } catch (error) {
       console.error('API Processing Error:', error);
-      throw error;
-    }
-  };
-
-  // Simulate processing with progress updates
-  useEffect(() => {
-    if (!isProcessing || !videoSource) return;
-    
-    let currentProgress = 0;
-    let currentStageIndex = 0;
-    
-    // Update progress and stage at intervals
-    const progressInterval = setInterval(() => {
-      // Increment progress
-      const increment = Math.random() * 2 + 0.1;
-      currentProgress += increment;
-      
-      // Update stage based on progress
-      if (currentProgress > (currentStageIndex + 1) * (100 / processingStages.length)) {
-        currentStageIndex = Math.min(currentStageIndex + 1, processingStages.length - 1);
-        setProcessingStage(processingStages[currentStageIndex]);
-      }
-      
-      if (currentProgress >= 100) {
-        clearInterval(progressInterval);
-        return;
-      }
-      
-      setProgress(currentProgress);
-    }, 200);
-    
-    return () => clearInterval(progressInterval);
-  }, [isProcessing, videoSource]);
-
-  const handleVideoSubmit = async (data: VideoSource) => {
-    setVideoSource(data);
-    setIsProcessing(true);
-    setProgress(0);
-    setProcessingStage('Initializing');
-    setProcessedVideoUrl(null);
-    
-    toast.info('Starting video processing...');
-    console.log('Processing with options:', {
-      aspectRatio: data.aspectRatio,
-      captions: data.captions
-    });
-    
-    try {
-      // Make the actual API call
-      const videoUrl = await processVideoWithApi(data);
-      
-      // Simulate additional processing time for smoother UX
-      setTimeout(() => {
-        setProcessedVideoUrl(videoUrl);
-        setIsProcessing(false);
-        setProgress(100);
-        toast.success('Video processing complete!');
-      }, 1000);
-    } catch (error) {
-      console.error('Error processing video:', error);
       setIsProcessing(false);
       toast.error(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -141,6 +160,11 @@ const VideoProcessor: React.FC = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
+      {/* API Status Indicator */}
+      <div className={`text-center mb-4 text-sm ${apiStatus.isConnected ? 'text-green-400' : 'text-yellow-400'}`}>
+        {apiStatus.message}
+      </div>
+      
       {!isProcessing && !processedVideoUrl && (
         <VideoInput onVideoSubmit={handleVideoSubmit} isProcessing={isProcessing} />
       )}
@@ -164,6 +188,7 @@ const VideoProcessor: React.FC = () => {
                 setVideoSource(null);
                 setProcessedVideoUrl(null);
                 setIsProcessing(false);
+                setJobId(null);
               }}
             >
               Process another video

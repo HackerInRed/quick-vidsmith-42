@@ -1,12 +1,10 @@
 
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Link2, Upload, PlayCircle, Ratio, Captions } from 'lucide-react';
+import { Link2, Upload, PlayCircle, Square, LayoutLandscape, LayoutPortrait, Captions } from 'lucide-react';
 import { Textarea } from "./ui/textarea";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
-import { FormControl, FormItem, FormLabel } from "./ui/form";
 
 interface VideoInputProps {
   onVideoSubmit: (data: { 
@@ -132,32 +130,36 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
           />
         </div>
 
-        {/* Aspect Ratio Selector */}
+        {/* Visual Aspect Ratio Selector */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Ratio size={16} className="text-gray-300" />
-            <label className="block text-sm text-gray-300">
-              Aspect Ratio
-            </label>
+          <label className="block text-sm text-gray-300 mb-3">
+            Aspect Ratio
+          </label>
+          <div className="flex space-x-4 items-center justify-center">
+            <div 
+              className={`relative w-20 h-20 border-2 rounded flex items-center justify-center cursor-pointer hover:bg-vidsmith-muted/20 transition-colors ${aspectRatio === '1:1' ? 'border-vidsmith-accent' : 'border-vidsmith-border'}`}
+              onClick={() => setAspectRatio('1:1')}
+            >
+              <Square size={32} className={`${aspectRatio === '1:1' ? 'text-vidsmith-accent' : 'text-gray-400'}`} />
+              <span className="absolute -bottom-6 text-sm text-gray-300">1:1</span>
+            </div>
+            
+            <div 
+              className={`relative w-32 h-18 border-2 rounded flex items-center justify-center cursor-pointer hover:bg-vidsmith-muted/20 transition-colors ${aspectRatio === '16:9' ? 'border-vidsmith-accent' : 'border-vidsmith-border'}`}
+              onClick={() => setAspectRatio('16:9')}
+            >
+              <LayoutLandscape size={32} className={`${aspectRatio === '16:9' ? 'text-vidsmith-accent' : 'text-gray-400'}`} />
+              <span className="absolute -bottom-6 text-sm text-gray-300">16:9</span>
+            </div>
+            
+            <div 
+              className={`relative w-18 h-32 border-2 rounded flex items-center justify-center cursor-pointer hover:bg-vidsmith-muted/20 transition-colors ${aspectRatio === '9:16' ? 'border-vidsmith-accent' : 'border-vidsmith-border'}`}
+              onClick={() => setAspectRatio('9:16')}
+            >
+              <LayoutPortrait size={32} className={`${aspectRatio === '9:16' ? 'text-vidsmith-accent' : 'text-gray-400'}`} />
+              <span className="absolute -bottom-6 text-sm text-gray-300">9:16</span>
+            </div>
           </div>
-          <RadioGroup 
-            value={aspectRatio} 
-            onValueChange={(value) => setAspectRatio(value as '1:1' | '16:9' | '9:16')}
-            className="flex space-x-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="1:1" id="ratio-square" disabled={isProcessing} />
-              <Label htmlFor="ratio-square" className="text-gray-300">1:1 (Square)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="16:9" id="ratio-landscape" disabled={isProcessing} />
-              <Label htmlFor="ratio-landscape" className="text-gray-300">16:9 (Landscape)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="9:16" id="ratio-portrait" disabled={isProcessing} />
-              <Label htmlFor="ratio-portrait" className="text-gray-300">9:16 (Portrait)</Label>
-            </div>
-          </RadioGroup>
         </div>
 
         {/* Captions Toggle */}
