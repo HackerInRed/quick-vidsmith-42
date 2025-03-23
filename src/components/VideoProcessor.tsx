@@ -6,8 +6,8 @@ import VideoPlayer from './VideoPlayer';
 import { toast } from 'sonner';
 
 interface VideoSource {
-  type: 'file';
-  source: File;
+  type: 'url' | 'file';
+  source: string | File;
   query: string;
   aspectRatio: '1:1' | '16:9' | '9:16';
   captions: boolean;
@@ -57,12 +57,7 @@ const VideoProcessor: React.FC = () => {
     };
 
     checkApiConnection();
-    
-    // Set up periodic checking
-    const intervalId = setInterval(checkApiConnection, 10000);
-    
-    return () => clearInterval(intervalId);
-  }, [API_BASE_URL]);
+  }, []);
 
   // Poll job status
   useEffect(() => {
@@ -79,35 +74,27 @@ const VideoProcessor: React.FC = () => {
           }
 
           const data = await response.json();
-          console.log('Job status response:', data);
           
           // Update progress based on status
           setProgress(Math.round(data.progress * 100));
           setProcessingStage(data.message || 'Processing video...');
 
           // Check if processing is complete
-          if (data.status === 'completed') {
+          if (data.status === 'completed' && data.output_video) {
             clearInterval(intervalId);
             setIsProcessing(false);
             setProgress(100);
-            
-            // Get the video output URL
-            try {
-              const outputUrl = `${API_BASE_URL}/output/${jobId}`;
-              console.log('Output video URL:', outputUrl);
-              setProcessedVideoUrl(outputUrl);
-              toast.success('Video processing complete!');
-            } catch (err) {
-              console.error('Error getting output video:', err);
-              toast.error('Error retrieving the processed video');
-            }
+            // Construct the full URL for the video
+            const videoUrl = `${API_BASE_URL}${data.output_video}`;
+            setProcessedVideoUrl(videoUrl);
+            toast.success('Video processing complete!');
           }
           
           // Check if processing failed
           if (data.status === 'failed') {
             clearInterval(intervalId);
             setIsProcessing(false);
-            toast.error(`Processing failed: ${data.message || 'Unknown error'}`);
+            toast.error(`Processing failed: ${data.error || 'Unknown error'}`);
           }
         } catch (error) {
           console.error('Error polling job status:', error);
@@ -144,7 +131,12 @@ const VideoProcessor: React.FC = () => {
       
       formData.append('aspect_ratio', backendAspectRatio);
       formData.append('burn_captions', data.captions.toString());
-      formData.append('video', data.source as File);
+      
+      if (data.type === 'url') {
+        formData.append('video_url', data.source as string);
+      } else {
+        formData.append('video', data.source as File);
+      }
       
       // Call the API to start processing
       const response = await fetch(`${API_BASE_URL}/process`, {
@@ -157,7 +149,6 @@ const VideoProcessor: React.FC = () => {
       }
       
       const result = await response.json();
-      console.log('Process response:', result);
       setJobId(result.job_id);
       
     } catch (error) {
