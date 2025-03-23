@@ -1,9 +1,10 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import VideoProcessor from '../components/VideoProcessor';
 import FeatureCard from '../components/FeatureCard';
-import { Scissors, Wand2, Zap, Clock, Share2, MessageSquare } from 'lucide-react';
+import { Scissors, Wand2, Zap, Clock, Share2, MessageSquare, ArrowRight } from 'lucide-react';
+import { Button } from '../components/ui/button';
 
 const Index = () => {
   return (
@@ -17,13 +18,19 @@ const Index = () => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4">
               Transform Long Videos into <span className="text-vidsmith-accent">Short Clips</span>
             </h1>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-10">
               Upload any video or paste a URL and our AI will generate engaging clips optimized for social media.
             </p>
-          </div>
-
-          <div className="mb-16 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <VideoProcessor />
+            
+            <Link to="/upload" className="inline-block">
+              <Button 
+                size="lg" 
+                className="group bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md transition-all duration-300 transform hover:scale-105 hover:shadow-glow animate-pulse"
+              >
+                Get Started 
+                <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -134,7 +141,15 @@ const Index = () => {
             <p className="text-gray-400 mb-8 max-w-lg mx-auto">
               Start creating engaging short-form content from your long videos today.
             </p>
-            <a href="#" className="btn-primary py-3 px-8 text-lg">Get Started Now</a>
+            <Link to="/upload">
+              <Button 
+                size="lg" 
+                className="group bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md transition-all duration-300 transform hover:scale-105"
+              >
+                Get Started Now
+                <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

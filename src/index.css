@@ -119,4 +119,13 @@
   .video-mask {
     mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
   }
+  
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 15px 5px rgba(58, 175, 169, 0.3);
+  }
 }
+
