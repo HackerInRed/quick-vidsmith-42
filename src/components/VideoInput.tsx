@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Link2, Upload, PlayCircle, Ratio, Captions } from 'lucide-react';
+import { Link2, Upload, PlayCircle, Square, Rectangle, RectangleVertical, Captions } from 'lucide-react';
 import { Textarea } from "./ui/textarea";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
@@ -132,30 +132,44 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
           />
         </div>
 
-        {/* Aspect Ratio Selector */}
+        {/* Visual Aspect Ratio Selector */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Ratio size={16} className="text-gray-300" />
-            <label className="block text-sm text-gray-300">
-              Aspect Ratio
-            </label>
-          </div>
+          <label className="block text-sm text-gray-300 mb-3">
+            Aspect Ratio
+          </label>
           <RadioGroup 
             value={aspectRatio} 
             onValueChange={(value) => setAspectRatio(value as '1:1' | '16:9' | '9:16')}
-            className="flex space-x-4"
+            className="flex space-x-6"
           >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="1:1" id="ratio-square" disabled={isProcessing} />
-              <Label htmlFor="ratio-square" className="text-gray-300">1:1 (Square)</Label>
+            <div className="flex flex-col items-center">
+              <div className={`w-16 h-16 rounded-md mb-2 flex items-center justify-center ${aspectRatio === '1:1' ? 'bg-vidsmith-accent text-white' : 'bg-vidsmith-muted/50 text-gray-400'} transition-colors`}>
+                <Square className="w-10 h-10" />
+              </div>
+              <div className="flex items-center">
+                <RadioGroupItem value="1:1" id="ratio-square" disabled={isProcessing} className="mr-2" />
+                <Label htmlFor="ratio-square" className="text-gray-300">1:1</Label>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="16:9" id="ratio-landscape" disabled={isProcessing} />
-              <Label htmlFor="ratio-landscape" className="text-gray-300">16:9 (Landscape)</Label>
+            
+            <div className="flex flex-col items-center">
+              <div className={`w-16 h-16 rounded-md mb-2 flex items-center justify-center ${aspectRatio === '16:9' ? 'bg-vidsmith-accent text-white' : 'bg-vidsmith-muted/50 text-gray-400'} transition-colors`}>
+                <Rectangle className="w-12 h-8" />
+              </div>
+              <div className="flex items-center">
+                <RadioGroupItem value="16:9" id="ratio-landscape" disabled={isProcessing} className="mr-2" />
+                <Label htmlFor="ratio-landscape" className="text-gray-300">16:9</Label>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="9:16" id="ratio-portrait" disabled={isProcessing} />
-              <Label htmlFor="ratio-portrait" className="text-gray-300">9:16 (Portrait)</Label>
+            
+            <div className="flex flex-col items-center">
+              <div className={`w-16 h-16 rounded-md mb-2 flex items-center justify-center ${aspectRatio === '9:16' ? 'bg-vidsmith-accent text-white' : 'bg-vidsmith-muted/50 text-gray-400'} transition-colors`}>
+                <RectangleVertical className="w-8 h-12" />
+              </div>
+              <div className="flex items-center">
+                <RadioGroupItem value="9:16" id="ratio-portrait" disabled={isProcessing} className="mr-2" />
+                <Label htmlFor="ratio-portrait" className="text-gray-300">9:16</Label>
+              </div>
             </div>
           </RadioGroup>
         </div>

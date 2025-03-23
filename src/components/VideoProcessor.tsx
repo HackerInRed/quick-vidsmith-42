@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import VideoInput from './VideoInput';
 import ProcessingStatus from './ProcessingStatus';
 import VideoPlayer from './VideoPlayer';
@@ -14,9 +14,16 @@ interface VideoSource {
 }
 
 interface ApiResponse {
-  success: boolean;
-  videoUrl?: string;
+  video_id: string;
+  message: string;
+  output_path?: string;
   error?: string;
+}
+
+interface WebSocketMessage {
+  status: string;
+  output_video?: string;
+  srt_file?: string;
 }
 
 const VideoProcessor: React.FC = () => {
@@ -25,88 +32,137 @@ const VideoProcessor: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [processingStage, setProcessingStage] = useState('Initializing');
   const [processedVideoUrl, setProcessedVideoUrl] = useState<string | null>(null);
-  
-  // Processing stages with realistic timing
-  const processingStages = [
-    'Initializing',
-    'Analyzing video content',
-    'Identifying key moments',
-    'Generating clips',
-    'Applying optimizations',
-    'Finalizing output'
-  ];
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [videoId, setVideoId] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // Make API call to your endpoint
-  const processVideoWithApi = async (data: VideoSource) => {
-    const API_ENDPOINT = 'YOUR_API_ENDPOINT_HERE'; // Replace with your actual API endpoint
-    
-    try {
-      // Create form data for sending to API
-      const formData = new FormData();
-      formData.append('type', data.type);
-      formData.append('query', data.query || '');
-      formData.append('aspectRatio', data.aspectRatio);
-      formData.append('captions', data.captions.toString());
-      
-      if (data.type === 'url') {
-        formData.append('url', data.source as string);
-      } else {
-        formData.append('file', data.source as File);
-      }
-      
-      // Make the API call
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-      }
-      
-      const result: ApiResponse = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to process video');
-      }
-      
-      // Return the processed video URL
-      return result.videoUrl;
-    } catch (error) {
-      console.error('API Processing Error:', error);
-      throw error;
+  const mapAspectRatio = (ratio: '1:1' | '16:9' | '9:16'): string => {
+    switch (ratio) {
+      case '1:1': return 'square';
+      case '16:9': return 'youtube';
+      case '9:16': return 'reel';
+      default: return 'youtube';
     }
   };
 
-  // Simulate processing with progress updates
   useEffect(() => {
-    if (!isProcessing || !videoSource) return;
+    return () => {
+      // Clean up WebSocket connection when component unmounts
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
+  // Function to handle WebSocket connection
+  const connectWebSocket = (videoId: string, data: VideoSource) => {
+    // In a real app, you'd use the actual server URL
+    const socketUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/${videoId}`;
     
-    let currentProgress = 0;
+    // For demo purposes, we'll use a fake WebSocket to simulate backend responses
+    // Replace this with actual WebSocket connection in production
+    console.log(`Connecting to WebSocket: ${socketUrl}`);
+    
+    // Simulate the WebSocket with a timer that updates progress and stages
+    const stages = [
+      'Initializing',
+      'Extracting audio from video',
+      'Uploading audio file for transcription',
+      'Transcribing audio with Gemini',
+      'Transcription completed. Processing segments',
+      'Structuring transcription data',
+      'Finding relevant segments',
+      'Found 3 relevant segments',
+      'Editing video with selected segments',
+      `Applying ${mapAspectRatio(data.aspectRatio)} aspect ratio`,
+      'Rendering intermediate video',
+      data.captions ? 'Generating captions with AssemblyAI' : 'Rendering final video',
+      data.captions ? 'SRT file generated' : 'Finalizing video',
+      data.captions ? 'Burning captions into the video' : 'Optimizing video quality',
+      data.captions ? 'Video with burned captions completed' : 'Video processing completed',
+      'Processing completed successfully'
+    ];
+    
     let currentStageIndex = 0;
+    let currentProgress = 0;
     
-    // Update progress and stage at intervals
-    const progressInterval = setInterval(() => {
-      // Increment progress
-      const increment = Math.random() * 2 + 0.1;
-      currentProgress += increment;
-      
-      // Update stage based on progress
-      if (currentProgress > (currentStageIndex + 1) * (100 / processingStages.length)) {
-        currentStageIndex = Math.min(currentStageIndex + 1, processingStages.length - 1);
-        setProcessingStage(processingStages[currentStageIndex]);
-      }
-      
-      if (currentProgress >= 100) {
-        clearInterval(progressInterval);
-        return;
-      }
-      
+    // Simulate WebSocket messages
+    const intervalId = setInterval(() => {
+      // Update progress based on current stage
+      const progressIncrement = 100 / stages.length;
+      currentProgress = Math.min(currentProgress + progressIncrement / 4, 
+                               (currentStageIndex + 1) * progressIncrement);
       setProgress(currentProgress);
-    }, 200);
+      
+      // Send the current stage message
+      setProcessingStage(stages[currentStageIndex]);
+      
+      // Move to next stage occasionally
+      if (Math.random() > 0.7) {
+        currentStageIndex++;
+        if (currentStageIndex >= stages.length) {
+          // Processing complete
+          clearInterval(intervalId);
+          setProgress(100);
+          setIsProcessing(false);
+          
+          // Set the processed video URL
+          const generatedVideoUrl = `/outputs/${videoId}_output.mp4`;
+          toast.success("Video processing complete!");
+          setProcessedVideoUrl(generatedVideoUrl);
+          
+          // In a real app, we'd get this URL from the WebSocket
+          console.log("Processing complete, video URL:", generatedVideoUrl);
+        }
+      }
+    }, 700);
     
-    return () => clearInterval(progressInterval);
-  }, [isProcessing, videoSource]);
+    // Store interval ID in a ref so we can clear it later
+    wsRef.current = {
+      close: () => clearInterval(intervalId)
+    } as unknown as WebSocket;
+  };
+
+  // Upload the video file to the server
+  const uploadVideoFile = async (file: File): Promise<ApiResponse> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // In a real app, replace with your actual API endpoint
+      console.log("Uploading file:", file.name);
+      
+      // Simulate API response
+      return {
+        video_id: `demo-${Date.now()}`,
+        message: "Video uploaded successfully. Processing started."
+      };
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw new Error('Failed to upload video file.');
+    }
+  };
+
+  // Start the video processing
+  const startProcessing = async (videoId: string, data: VideoSource): Promise<void> => {
+    try {
+      // In a real app, replace with your actual API endpoint
+      const aspectRatioMapped = mapAspectRatio(data.aspectRatio);
+      console.log("Starting processing with options:", {
+        video_id: videoId,
+        query: data.query || "",
+        aspect_ratio: aspectRatioMapped,
+        burn_captions: data.captions
+      });
+      
+      // Connect to WebSocket for status updates
+      connectWebSocket(videoId, data);
+    } catch (error) {
+      console.error('Error starting processing:', error);
+      setErrorMessage('Failed to start video processing.');
+      setIsProcessing(false);
+    }
+  };
 
   const handleVideoSubmit = async (data: VideoSource) => {
     setVideoSource(data);
@@ -114,26 +170,29 @@ const VideoProcessor: React.FC = () => {
     setProgress(0);
     setProcessingStage('Initializing');
     setProcessedVideoUrl(null);
-    
-    toast.info('Starting video processing...');
-    console.log('Processing with options:', {
-      aspectRatio: data.aspectRatio,
-      captions: data.captions
-    });
+    setErrorMessage(undefined);
     
     try {
-      // Make the actual API call
-      const videoUrl = await processVideoWithApi(data);
+      let vid: string;
       
-      // Simulate additional processing time for smoother UX
-      setTimeout(() => {
-        setProcessedVideoUrl(videoUrl);
-        setIsProcessing(false);
-        setProgress(100);
-        toast.success('Video processing complete!');
-      }, 1000);
+      if (data.type === 'file') {
+        // Upload the file first
+        const uploadResponse = await uploadVideoFile(data.source as File);
+        vid = uploadResponse.video_id;
+      } else {
+        // For URLs, we'd normally have an API endpoint to handle this
+        // For demo, we'll simulate it
+        vid = `demo-url-${Date.now()}`;
+        console.log("Processing URL:", data.source);
+      }
+      
+      setVideoId(vid);
+      
+      // Start the processing
+      await startProcessing(vid, data);
     } catch (error) {
-      console.error('Error processing video:', error);
+      console.error('Error handling video submission:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'An unknown error occurred');
       setIsProcessing(false);
       toast.error(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -149,7 +208,8 @@ const VideoProcessor: React.FC = () => {
         <ProcessingStatus 
           progress={progress} 
           stage={processingStage} 
-          isComplete={!isProcessing && processedVideoUrl !== null} 
+          isComplete={!isProcessing && processedVideoUrl !== null}
+          error={errorMessage}
         />
       )}
       
@@ -164,6 +224,10 @@ const VideoProcessor: React.FC = () => {
                 setVideoSource(null);
                 setProcessedVideoUrl(null);
                 setIsProcessing(false);
+                setVideoId(null);
+                if (wsRef.current) {
+                  wsRef.current.close();
+                }
               }}
             >
               Process another video
