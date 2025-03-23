@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import VideoInput from './VideoInput';
 import ProcessingStatus from './ProcessingStatus';
 import VideoPlayer from './VideoPlayer';
@@ -30,24 +30,30 @@ const VideoProcessor: React.FC = () => {
   
   // Poll for job status if we have a job ID
   useEffect(() => {
-    if (!jobId || !isProcessing) return;
+    if (!jobId || !isProcessing || !isApiAvailable) return;
+    
+    console.log('Starting to poll for job status with ID:', jobId);
     
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/status/${jobId}`);
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/status/${jobId}`);
         
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('Job status update:', data);
         
         setProgress(data.progress);
         setProcessingStage(data.message);
         
         if (data.status === 'completed') {
           setIsProcessing(false);
-          setProcessedVideoUrl(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${data.output_video}`);
+          const videoUrl = `${apiUrl}${data.output_video}`;
+          console.log('Processing complete, video URL:', videoUrl);
+          setProcessedVideoUrl(videoUrl);
           toast.success('Video processing complete!');
           clearInterval(interval);
         } else if (data.status === 'failed') {
@@ -61,8 +67,11 @@ const VideoProcessor: React.FC = () => {
       }
     }, 2000);
     
-    return () => clearInterval(interval);
-  }, [jobId, isProcessing]);
+    return () => {
+      console.log('Clearing polling interval');
+      clearInterval(interval);
+    };
+  }, [jobId, isProcessing, isApiAvailable]);
 
   const handleVideoSubmit = async (data: VideoSource) => {
     setVideoSource(data);
@@ -83,6 +92,7 @@ const VideoProcessor: React.FC = () => {
   const processWithBackend = async (data: VideoSource) => {
     try {
       toast.info('Starting video processing...');
+      console.log('Processing with backend, data:', data);
       
       // Create form data for the API request
       const formData = new FormData();
@@ -97,16 +107,22 @@ const VideoProcessor: React.FC = () => {
       }
       
       // Send the request to the backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/process`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      console.log('Sending request to:', `${apiUrl}/process`);
+      
+      const response = await fetch(`${apiUrl}/process`, {
         method: 'POST',
         body: formData,
       });
       
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
       }
       
       const result = await response.json();
+      console.log('Processing job created:', result);
+      
       setJobId(result.id);
       setProcessingStage(result.message);
       setProgress(result.progress);
