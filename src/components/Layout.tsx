@@ -34,7 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
       <footer className="border-t border-vidsmith-border py-6">
         <div className="container mx-auto px-4 text-center text-gray-400 text-sm">
-          <p>© {new Date().getFullYear()} CreAItive. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} VidSmith. All rights reserved.</p>
         </div>
       </footer>
     </div>
