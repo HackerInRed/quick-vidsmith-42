@@ -11,6 +11,12 @@ interface VideoSource {
   query: string;
 }
 
+interface ApiResponse {
+  success: boolean;
+  videoUrl?: string;
+  error?: string;
+}
+
 const VideoProcessor: React.FC = () => {
   const [videoSource, setVideoSource] = useState<VideoSource | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -18,7 +24,7 @@ const VideoProcessor: React.FC = () => {
   const [processingStage, setProcessingStage] = useState('Initializing');
   const [processedVideoUrl, setProcessedVideoUrl] = useState<string | null>(null);
   
-  // Mock processing stages with realistic timing
+  // Processing stages with realistic timing
   const processingStages = [
     'Initializing',
     'Analyzing video content',
@@ -28,16 +34,56 @@ const VideoProcessor: React.FC = () => {
     'Finalizing output'
   ];
 
-  // Simulate processing with staged progress
+  // Make API call to your endpoint
+  const processVideoWithApi = async (data: VideoSource) => {
+    const API_ENDPOINT = 'YOUR_API_ENDPOINT_HERE'; // Replace with your actual API endpoint
+    
+    try {
+      // Create form data for sending to API
+      const formData = new FormData();
+      formData.append('type', data.type);
+      formData.append('query', data.query || '');
+      
+      if (data.type === 'url') {
+        formData.append('url', data.source as string);
+      } else {
+        formData.append('file', data.source as File);
+      }
+      
+      // Make the API call
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to process video');
+      }
+      
+      // Return the processed video URL
+      return result.videoUrl;
+    } catch (error) {
+      console.error('API Processing Error:', error);
+      throw error;
+    }
+  };
+
+  // Simulate processing with progress updates
   useEffect(() => {
     if (!isProcessing || !videoSource) return;
     
     let currentProgress = 0;
     let currentStageIndex = 0;
     
-    // Mock processing with stages
-    const interval = setInterval(() => {
-      // Randomly increment progress, but ensure smooth progression
+    // Update progress and stage at intervals
+    const progressInterval = setInterval(() => {
+      // Increment progress
       const increment = Math.random() * 2 + 0.1;
       currentProgress += increment;
       
@@ -48,46 +94,40 @@ const VideoProcessor: React.FC = () => {
       }
       
       if (currentProgress >= 100) {
-        clearInterval(interval);
-        
-        // Simulate a little delay before completing
-        setTimeout(() => {
-          // Mock result video (in production, this would be a real URL)
-          const demoVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-          setProcessedVideoUrl(demoVideoUrl);
-          setIsProcessing(false);
-          setProgress(100);
-          toast.success('Video processing complete!');
-        }, 500);
-        
+        clearInterval(progressInterval);
         return;
       }
       
       setProgress(currentProgress);
     }, 200);
     
-    return () => clearInterval(interval);
+    return () => clearInterval(progressInterval);
   }, [isProcessing, videoSource]);
 
-  const handleVideoSubmit = (data: VideoSource) => {
+  const handleVideoSubmit = async (data: VideoSource) => {
     setVideoSource(data);
     setIsProcessing(true);
     setProgress(0);
     setProcessingStage('Initializing');
     setProcessedVideoUrl(null);
     
-    // In a real app, you would call your API here
     toast.info('Starting video processing...');
     
-    // If it's a file, we'd typically upload it first
-    if (data.type === 'file') {
-      console.log('Processing file:', data.source);
-      console.log('User query:', data.query);
-      // In a real implementation, upload the file to your server
-    } else {
-      console.log('Processing URL:', data.source);
-      console.log('User query:', data.query);
-      // In a real implementation, send the URL to your server
+    try {
+      // Make the actual API call
+      const videoUrl = await processVideoWithApi(data);
+      
+      // Simulate additional processing time for smoother UX
+      setTimeout(() => {
+        setProcessedVideoUrl(videoUrl);
+        setIsProcessing(false);
+        setProgress(100);
+        toast.success('Video processing complete!');
+      }, 1000);
+    } catch (error) {
+      console.error('Error processing video:', error);
+      setIsProcessing(false);
+      toast.error(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
