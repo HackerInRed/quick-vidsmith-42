@@ -31,6 +31,17 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
     });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('video/')) {
+        toast.error('Please select a valid video file');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
   const handleFileSubmit = () => {
     if (!selectedFile) {
       toast.error('Please select a video file');
