@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 interface VideoSource {
   type: 'url' | 'file';
   source: string | File;
+  query: string;
 }
 
 const VideoProcessor: React.FC = () => {
@@ -81,9 +82,11 @@ const VideoProcessor: React.FC = () => {
     // If it's a file, we'd typically upload it first
     if (data.type === 'file') {
       console.log('Processing file:', data.source);
+      console.log('User query:', data.query);
       // In a real implementation, upload the file to your server
     } else {
       console.log('Processing URL:', data.source);
+      console.log('User query:', data.query);
       // In a real implementation, send the URL to your server
     }
   };

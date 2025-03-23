@@ -2,9 +2,10 @@
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { Link2, Upload, PlayCircle } from 'lucide-react';
+import { Textarea } from "./ui/textarea";
 
 interface VideoInputProps {
-  onVideoSubmit: (data: { type: 'url' | 'file', source: string | File }) => void;
+  onVideoSubmit: (data: { type: 'url' | 'file', source: string | File, query: string }) => void;
   isProcessing: boolean;
 }
 
@@ -12,6 +13,7 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
   const [inputType, setInputType] = useState<'url' | 'file'>('url');
   const [videoUrl, setVideoUrl] = useState('');
   const [dragActive, setDragActive] = useState(false);
+  const [userQuery, setUserQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -22,18 +24,11 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
       return;
     }
     
-    onVideoSubmit({ type: 'url', source: videoUrl });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (!file.type.startsWith('video/')) {
-        toast.error('Please select a valid video file');
-        return;
-      }
-      setSelectedFile(file);
-    }
+    onVideoSubmit({ 
+      type: 'url', 
+      source: videoUrl,
+      query: userQuery 
+    });
   };
 
   const handleFileSubmit = () => {
@@ -42,7 +37,11 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
       return;
     }
     
-    onVideoSubmit({ type: 'file', source: selectedFile });
+    onVideoSubmit({ 
+      type: 'file', 
+      source: selectedFile,
+      query: userQuery 
+    });
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -91,6 +90,21 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
       </div>
 
       <div className="glass-panel p-6 w-full">
+        {/* User query input field - common for both input types */}
+        <div className="space-y-2 mb-6">
+          <label htmlFor="user-query" className="block text-sm text-gray-300">
+            What clips would you like to generate? (optional)
+          </label>
+          <Textarea
+            id="user-query"
+            placeholder="E.g., 'Extract the most exciting moments' or 'Create clips showing product demos'"
+            className="glass-input w-full min-h-[80px] text-white bg-vidsmith-muted/30 border-vidsmith-border"
+            value={userQuery}
+            onChange={(e) => setUserQuery(e.target.value)}
+            disabled={isProcessing}
+          />
+        </div>
+
         {inputType === 'url' ? (
           <form onSubmit={handleUrlSubmit} className="space-y-4">
             <div className="space-y-2">

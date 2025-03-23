@@ -2,6 +2,7 @@
 export interface VideoInput {
   type: 'url' | 'file';
   source: string | File;
+  query?: string;
 }
 
 export interface ProcessingStatus {
