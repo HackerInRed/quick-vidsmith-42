@@ -1,7 +1,6 @@
-
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Link2, Upload, PlayCircle, Square, Smartphone, MonitorLandscape, Captions } from 'lucide-react';
+import { Link2, Upload, PlayCircle, Square, Smartphone, Monitor, Captions } from 'lucide-react';
 import { Textarea } from "./ui/textarea";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
@@ -117,7 +116,6 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
       </div>
 
       <div className="glass-panel p-6 w-full">
-        {/* User query input field - common for both input types */}
         <div className="space-y-2 mb-6">
           <label htmlFor="user-query" className="block text-sm text-gray-300">
             What clips would you like to generate? (optional)
@@ -132,7 +130,6 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
           />
         </div>
 
-        {/* Visual Aspect Ratio Selector */}
         <div className="mb-6">
           <label className="block text-sm text-gray-300 mb-3">
             Aspect Ratio
@@ -154,7 +151,7 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
             
             <div className="flex flex-col items-center">
               <div className={`w-16 h-16 rounded-md mb-2 flex items-center justify-center ${aspectRatio === '16:9' ? 'bg-vidsmith-accent text-white' : 'bg-vidsmith-muted/50 text-gray-400'} transition-colors`}>
-                <MonitorLandscape className="w-12 h-8" />
+                <Monitor className="w-12 h-8" />
               </div>
               <div className="flex items-center">
                 <RadioGroupItem value="16:9" id="ratio-landscape" disabled={isProcessing} className="mr-2" />
@@ -174,7 +171,6 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
           </RadioGroup>
         </div>
 
-        {/* Captions Toggle */}
         <div className="flex items-center space-x-4 mb-6">
           <div className="flex items-center gap-2">
             <Captions size={16} className="text-gray-300" />
