@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaRobot, FaCode, FaEdit } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import Layout from '../components/Layout';
 import FeatureCard from '../components/FeatureCard';
+import { Brain, Edit, Code } from 'lucide-react';
 
 const Index = () => {
   return (
@@ -35,7 +35,7 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Link to="/upload" className="btn-primary text-lg px-8 py-3 inline-block">
+              <Link to="/upload" className="btn-primary text-lg px-8 py-3 inline-block hover:bg-vidsmith-accent-light transition-colors">
                 Get Started
               </Link>
             </motion.div>
@@ -49,17 +49,17 @@ const Index = () => {
           <h2 className="text-3xl font-bold text-center mb-12">Powerful Features</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard 
-              icon={<FaRobot className="text-3xl text-vidsmith-accent" />}
+              icon={Brain}
               title="AI-Powered Analysis"
               description="Our advanced AI understands your videos and identifies the most engaging moments automatically."
             />
             <FeatureCard 
-              icon={<FaEdit className="text-3xl text-vidsmith-accent" />}
+              icon={Edit}
               title="Smart Editing"
               description="Create perfectly sized clips for any platform - YouTube, Instagram, TikTok, and more."
             />
             <FeatureCard 
-              icon={<FaCode className="text-3xl text-vidsmith-accent" />}
+              icon={Code}
               title="Caption Generation"
               description="Automatically add captions to your videos to increase engagement and accessibility."
             />
@@ -115,7 +115,7 @@ const Index = () => {
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             Join thousands of content creators who use our AI to create engaging video content faster than ever.
           </p>
-          <Link to="/upload" className="btn-primary text-lg px-8 py-3 inline-block">
+          <Link to="/upload" className="btn-primary text-lg px-8 py-3 inline-block hover:bg-vidsmith-accent-light transition-colors">
             Get Started Now
           </Link>
         </div>
