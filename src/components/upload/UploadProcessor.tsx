@@ -16,18 +16,20 @@ export interface VideoOptions {
 }
 
 export interface JobStatusType {
-  job_id: string;
   status: string;
-  progress: number;
-  message?: string;
-  error?: string;
-  output_path?: string;
+  filename?: string;
+  query?: string;
+  aspect_ratio?: string;
+  burn_captions?: boolean;
+  timestamp?: number;
+  output_video?: string;
+  srt_path?: string;
 }
 
 export const UploadProcessor = () => {
   const [currentStep, setCurrentStep] = useState<UploadStepType>('upload');
   const [file, setFile] = useState<File | null>(null);
-  const [fileId, setFileId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
   const [options, setOptions] = useState<VideoOptions>({
     query: '',
     aspectRatio: 'youtube',
@@ -41,8 +43,8 @@ export const UploadProcessor = () => {
   useEffect(() => {
     const checkApiStatus = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/status/test`, { 
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiUrl}/jobs`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: AbortSignal.timeout(5000) // Timeout after 5 seconds
@@ -68,13 +70,13 @@ export const UploadProcessor = () => {
     }
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
       // Create form data
       const formData = new FormData();
-      formData.append('file', selectedFile);
+      formData.append('video', selectedFile);
       
-      // Upload the file to get a file ID
+      // Upload the file
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
         body: formData,
@@ -85,7 +87,7 @@ export const UploadProcessor = () => {
       }
       
       const result = await response.json();
-      setFileId(result.job_id);
+      setJobId(result.job_id);
       
       // Move to options step
       setCurrentStep('options');
@@ -98,24 +100,33 @@ export const UploadProcessor = () => {
   const handleSubmitOptions = async (videoOptions: VideoOptions) => {
     setOptions(videoOptions);
     
-    if (!fileId) {
-      toast.error('File ID is missing. Please upload a file first.');
+    if (!jobId) {
+      toast.error('Job ID is missing. Please upload a file first.');
       return;
     }
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      // Submit the processing request
-      const response = await fetch(`${apiUrl}/process`, {
+      // The Flask backend accepts the options directly in the upload route, 
+      // so we need to create a new FormData and upload again with the options
+      const formData = new FormData();
+      
+      if (file) {
+        formData.append('video', file);
+      } else {
+        toast.error('File is missing. Please upload a file first.');
+        return;
+      }
+      
+      formData.append('query', videoOptions.query);
+      formData.append('aspectRatio', videoOptions.aspectRatio);
+      formData.append('burnCaptions', String(videoOptions.burnCaptions));
+      
+      // Upload with options
+      const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_id: fileId,
-          query: videoOptions.query,
-          aspect_ratio: videoOptions.aspectRatio,
-          burn_captions: videoOptions.burnCaptions
-        }),
+        body: formData,
       });
       
       if (!response.ok) {
@@ -123,68 +134,24 @@ export const UploadProcessor = () => {
       }
       
       const result = await response.json();
-      setJobStatus(result);
+      // Update job ID with the new one
+      setJobId(result.job_id);
       setCurrentStep('processing');
       
       // Start polling for job status
-      pollJobStatus(result.job_id);
+      startPolling(result.job_id);
     } catch (error) {
       console.error('Error starting processing:', error);
       toast.error(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  const pollJobStatus = async (jobId: string) => {
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      
-      // Setup websocket connection for real-time updates if supported
-      if ('WebSocket' in window) {
-        const websocketUrl = `${apiUrl.replace('http', 'ws')}/ws/${jobId}`;
-        const socket = new WebSocket(websocketUrl);
-        
-        socket.onopen = () => {
-          console.log('WebSocket connection established');
-        };
-        
-        socket.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          setJobStatus(data);
-          
-          if (data.status === 'complete' && data.output_path) {
-            setOutputUrl(`${apiUrl}/output/${jobId}`);
-            setCurrentStep('result');
-            socket.close();
-          } else if (data.status === 'error') {
-            toast.error(`Processing error: ${data.error || 'Unknown error'}`);
-            socket.close();
-          }
-        };
-        
-        socket.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          // Fall back to polling
-          startPolling(jobId);
-        };
-        
-        return;
-      }
-      
-      // Fall back to polling if WebSockets aren't available
-      startPolling(jobId);
-    } catch (error) {
-      console.error('Error setting up status updates:', error);
-      // Fall back to polling
-      startPolling(jobId);
-    }
-  };
-
-  const startPolling = (jobId: string) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const startPolling = (currentJobId: string) => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
     const pollInterval = setInterval(async () => {
       try {
-        const response = await fetch(`${apiUrl}/status/${jobId}`);
+        const response = await fetch(`${apiUrl}/status/${currentJobId}`);
         
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
@@ -193,12 +160,12 @@ export const UploadProcessor = () => {
         const data = await response.json();
         setJobStatus(data);
         
-        if (data.status === 'complete' && data.output_path) {
-          setOutputUrl(`${apiUrl}/output/${jobId}`);
+        if (data.status === 'Completed') {
+          setOutputUrl(`${apiUrl}/output/${currentJobId}`);
           setCurrentStep('result');
           clearInterval(pollInterval);
-        } else if (data.status === 'error') {
-          toast.error(`Processing error: ${data.error || 'Unknown error'}`);
+        } else if (data.status.startsWith('Failed')) {
+          toast.error(`Processing error: ${data.status}`);
           clearInterval(pollInterval);
         }
       } catch (error) {
@@ -210,7 +177,7 @@ export const UploadProcessor = () => {
 
   const resetProcess = () => {
     setFile(null);
-    setFileId(null);
+    setJobId(null);
     setJobStatus(null);
     setOutputUrl(null);
     setCurrentStep('upload');
@@ -291,7 +258,12 @@ export const UploadProcessor = () => {
             
             {currentStep === 'processing' && jobStatus && (
               <ProcessingStep 
-                jobStatus={jobStatus}
+                jobStatus={{
+                  job_id: jobId || '',
+                  status: jobStatus.status === 'Completed' ? 'complete' : 'processing',
+                  progress: jobStatus.status === 'Completed' ? 100 : calculateProgress(jobStatus.status),
+                  message: jobStatus.status
+                }}
               />
             )}
             
@@ -306,4 +278,19 @@ export const UploadProcessor = () => {
       </div>
     </section>
   );
+};
+
+// Helper function to calculate progress based on status message
+const calculateProgress = (status: string): number => {
+  if (status === 'Uploaded') return 10;
+  if (status === 'Extracting audio') return 20;
+  if (status === 'Transcribing audio') return 40;
+  if (status === 'Finding relevant segments') return 60;
+  if (status === 'Editing video') return 70;
+  if (status === 'Adding captions') return 90;
+  if (status === 'Completed') return 100;
+  if (status.startsWith('Failed')) return 0;
+  
+  // Default progress
+  return 50;
 };

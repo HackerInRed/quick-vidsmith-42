@@ -5,8 +5,9 @@ const Logo = () => {
   return (
     <div className="flex items-center">
       <div className="text-2xl font-bold tracking-tight">
-        <span className="text-vidsmith-accent">CreA</span>
-        <span className="text-white">Itive</span>
+        <span className="text-white">Cre</span>
+        <span className="text-vidsmith-accent">AI</span>
+        <span className="text-white">tive</span>
       </div>
     </div>
   );

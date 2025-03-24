@@ -11,11 +11,11 @@ export const useApiStatus = () => {
     
     setIsChecking(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
       
-      const response = await fetch(`${apiUrl}/`, { 
+      const response = await fetch(`${apiUrl}/jobs`, { 
         method: 'GET',
         signal: controller.signal
       });

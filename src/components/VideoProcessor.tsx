@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import VideoInput from './VideoInput';
 import ProcessingStatus from './ProcessingStatus';
@@ -36,7 +35,7 @@ const VideoProcessor: React.FC = () => {
     
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/status/${jobId}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/status/${jobId}`);
         
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
@@ -44,19 +43,27 @@ const VideoProcessor: React.FC = () => {
         
         const data = await response.json();
         
-        setProgress(data.progress * 100); // Convert progress from 0-1 to 0-100
-        setProcessingStage(data.message || 'Processing...');
+        let calculatedProgress = 0;
+        if (data.status === 'Uploaded') calculatedProgress = 10;
+        else if (data.status === 'Extracting audio') calculatedProgress = 20;
+        else if (data.status === 'Transcribing audio') calculatedProgress = 40;
+        else if (data.status === 'Finding relevant segments') calculatedProgress = 60;
+        else if (data.status === 'Editing video') calculatedProgress = 70;
+        else if (data.status === 'Adding captions') calculatedProgress = 90;
+        else if (data.status === 'Completed') calculatedProgress = 100;
         
-        if (data.status === 'completed') {
+        setProgress(calculatedProgress);
+        setProcessingStage(data.status || 'Processing...');
+        
+        if (data.status === 'Completed') {
           setIsProcessing(false);
-          // Use the full URL for video output
-          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           setProcessedVideoUrl(`${apiUrl}/output/${jobId}`);
           toast.success('Video processing complete!');
           clearInterval(interval);
-        } else if (data.status === 'failed') {
+        } else if (data.status.startsWith('Failed')) {
           setIsProcessing(false);
-          toast.error(`Processing failed: ${data.error || 'Unknown error'}`);
+          toast.error(`Processing failed: ${data.status || 'Unknown error'}`);
           clearInterval(interval);
         }
       } catch (error) {
@@ -76,10 +83,8 @@ const VideoProcessor: React.FC = () => {
     setProcessedVideoUrl(null);
     
     if (isApiAvailable) {
-      // Use the backend API
       await processWithBackend(data);
     } else {
-      // Simulate processing with frontend-only logic
       simulateProcessing(data);
     }
   };
@@ -88,19 +93,22 @@ const VideoProcessor: React.FC = () => {
     try {
       toast.info('Starting video processing...');
       
-      // Create form data for the API request
       const formData = new FormData();
-      formData.append('prompt', data.query || 'Extract interesting moments');
-      formData.append('aspect_ratio', mapAspectRatio(data.aspectRatio));
-      formData.append('burn_captions', String(data.captions));
+      formData.append('query', data.query || 'Extract interesting moments');
+      
+      let aspectRatioValue = 'youtube';
+      if (data.aspectRatio === '1:1') aspectRatioValue = 'square';
+      else if (data.aspectRatio === '9:16') aspectRatioValue = 'reel';
+      
+      formData.append('aspectRatio', aspectRatioValue);
+      formData.append('burnCaptions', String(data.captions));
       
       if (data.type === 'file') {
         formData.append('video', data.source as File);
       }
       
-      // Send the request to the backend
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/process`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -111,9 +119,8 @@ const VideoProcessor: React.FC = () => {
       
       const result = await response.json();
       setJobId(result.job_id);
-      setProcessingStage(result.message || 'Processing started');
-      setProgress(0); // Start at 0%, will be updated by polling
-      
+      setProcessingStage('Processing started');
+      setProgress(10);
     } catch (error) {
       console.error('Error processing video with backend:', error);
       setIsProcessing(false);
@@ -121,17 +128,6 @@ const VideoProcessor: React.FC = () => {
     }
   };
   
-  // Map frontend aspect ratio to backend enum values
-  const mapAspectRatio = (ratio: '1:1' | '16:9' | '9:16'): string => {
-    switch (ratio) {
-      case '1:1': return 'square';
-      case '16:9': return 'youtube';
-      case '9:16': return 'reel';
-      default: return 'youtube';
-    }
-  };
-  
-  // Simulate processing for frontend-only mode (when backend is unavailable)
   const simulateProcessing = (data: VideoSource) => {
     toast.info('Starting video processing (simulation mode)...');
     console.log('Processing with options:', {
@@ -139,7 +135,6 @@ const VideoProcessor: React.FC = () => {
       captions: data.captions
     });
     
-    // Processing stages with realistic timing
     const processingStages = [
       'Initializing',
       'Analyzing video content',
@@ -152,13 +147,10 @@ const VideoProcessor: React.FC = () => {
     let currentProgress = 0;
     let currentStageIndex = 0;
     
-    // Update progress and stage at intervals
     const progressInterval = setInterval(() => {
-      // Increment progress
       const increment = Math.random() * 2 + 0.1;
       currentProgress += increment;
       
-      // Update stage based on progress
       if (currentProgress > (currentStageIndex + 1) * (100 / processingStages.length)) {
         currentStageIndex = Math.min(currentStageIndex + 1, processingStages.length - 1);
         setProcessingStage(processingStages[currentStageIndex]);
@@ -168,7 +160,7 @@ const VideoProcessor: React.FC = () => {
         clearInterval(progressInterval);
         
         setTimeout(() => {
-          setProcessedVideoUrl('/sample-output.mp4'); // Sample video path
+          setProcessedVideoUrl('/sample-output.mp4');
           setIsProcessing(false);
           setProgress(100);
           toast.success('Video processing complete! (simulation)');

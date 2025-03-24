@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -25,7 +24,7 @@ const Index = () => {
             <Link to="/upload" className="inline-block">
               <Button 
                 size="lg" 
-                className="group bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md transition-all duration-300 transform hover:scale-105 hover:shadow-glow animate-pulse"
+                className="group bg-vidsmith-accent hover:bg-vidsmith-accent-light text-white text-lg font-medium px-8 py-3 rounded-md transition-all duration-300 transform hover:scale-105 hover:shadow-glow"
               >
                 Get Started 
                 <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
@@ -63,7 +62,7 @@ const Index = () => {
             <FeatureCard 
               icon={Clock}
               title="Save Hours of Editing"
-              description="What would take hours in traditional editing software takes just minutes with VidSmith."
+              description="What would take hours in traditional editing software takes just minutes with CreAItive."
             />
             <FeatureCard 
               icon={Share2}
