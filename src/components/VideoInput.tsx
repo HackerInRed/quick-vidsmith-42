@@ -1,10 +1,11 @@
 
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Link2, Upload, PlayCircle, Square, LayoutLandscape, LayoutPortrait, Captions } from 'lucide-react';
+import { Link2, Upload, PlayCircle, Smartphone, Monitor, Square, Captions } from 'lucide-react';
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
+import { FormControl, FormItem, FormLabel } from "./ui/form";
 
 interface VideoInputProps {
   onVideoSubmit: (data: { 
@@ -95,6 +96,37 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
     }
   };
 
+  // Aspect ratio visualization styles
+  const aspectRatioOptionStyles = (value: '1:1' | '16:9' | '9:16') => {
+    return `relative flex flex-col items-center cursor-pointer p-3 rounded-lg border transition-all
+      ${aspectRatio === value 
+        ? 'border-vidsmith-accent bg-vidsmith-accent/10' 
+        : 'border-vidsmith-border bg-vidsmith-muted/20 hover:bg-vidsmith-muted/30'}`;
+  };
+
+  const renderAspectRatioIcon = (value: '1:1' | '16:9' | '9:16') => {
+    switch (value) {
+      case '1:1':
+        return (
+          <div className="w-12 h-12 flex items-center justify-center border-2 border-current rounded">
+            <Square className="w-8 h-8" />
+          </div>
+        );
+      case '16:9':
+        return (
+          <div className="w-16 h-9 flex items-center justify-center border-2 border-current rounded">
+            <Monitor className="w-10 h-6" />
+          </div>
+        );
+      case '9:16':
+        return (
+          <div className="w-9 h-16 flex items-center justify-center border-2 border-current rounded">
+            <Smartphone className="w-5 h-10" />
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="w-full max-w-xl mx-auto">
       <div className="flex justify-center space-x-4 mb-6">
@@ -135,29 +167,32 @@ const VideoInput: React.FC<VideoInputProps> = ({ onVideoSubmit, isProcessing }) 
           <label className="block text-sm text-gray-300 mb-3">
             Aspect Ratio
           </label>
-          <div className="flex space-x-4 items-center justify-center">
+          <div className="grid grid-cols-3 gap-4">
             <div 
-              className={`relative w-20 h-20 border-2 rounded flex items-center justify-center cursor-pointer hover:bg-vidsmith-muted/20 transition-colors ${aspectRatio === '1:1' ? 'border-vidsmith-accent' : 'border-vidsmith-border'}`}
+              className={aspectRatioOptionStyles('1:1')}
               onClick={() => setAspectRatio('1:1')}
             >
-              <Square size={32} className={`${aspectRatio === '1:1' ? 'text-vidsmith-accent' : 'text-gray-400'}`} />
-              <span className="absolute -bottom-6 text-sm text-gray-300">1:1</span>
+              {renderAspectRatioIcon('1:1')}
+              <span className="mt-2 text-sm text-gray-300">1:1</span>
+              <span className="text-xs text-gray-400">Square</span>
             </div>
             
             <div 
-              className={`relative w-32 h-18 border-2 rounded flex items-center justify-center cursor-pointer hover:bg-vidsmith-muted/20 transition-colors ${aspectRatio === '16:9' ? 'border-vidsmith-accent' : 'border-vidsmith-border'}`}
+              className={aspectRatioOptionStyles('16:9')}
               onClick={() => setAspectRatio('16:9')}
             >
-              <LayoutLandscape size={32} className={`${aspectRatio === '16:9' ? 'text-vidsmith-accent' : 'text-gray-400'}`} />
-              <span className="absolute -bottom-6 text-sm text-gray-300">16:9</span>
+              {renderAspectRatioIcon('16:9')}
+              <span className="mt-2 text-sm text-gray-300">16:9</span>
+              <span className="text-xs text-gray-400">Landscape</span>
             </div>
             
             <div 
-              className={`relative w-18 h-32 border-2 rounded flex items-center justify-center cursor-pointer hover:bg-vidsmith-muted/20 transition-colors ${aspectRatio === '9:16' ? 'border-vidsmith-accent' : 'border-vidsmith-border'}`}
+              className={aspectRatioOptionStyles('9:16')}
               onClick={() => setAspectRatio('9:16')}
             >
-              <LayoutPortrait size={32} className={`${aspectRatio === '9:16' ? 'text-vidsmith-accent' : 'text-gray-400'}`} />
-              <span className="absolute -bottom-6 text-sm text-gray-300">9:16</span>
+              {renderAspectRatioIcon('9:16')}
+              <span className="mt-2 text-sm text-gray-300">9:16</span>
+              <span className="text-xs text-gray-400">Portrait</span>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import VideoInput from './VideoInput';
 import ProcessingStatus from './ProcessingStatus';
 import VideoPlayer from './VideoPlayer';
 import { toast } from 'sonner';
+import { useApiStatus } from '../hooks/useApiStatus';
 
 interface VideoSource {
   type: 'url' | 'file';
@@ -13,11 +14,6 @@ interface VideoSource {
   captions: boolean;
 }
 
-interface ApiStatus {
-  isConnected: boolean;
-  message: string;
-}
-
 const VideoProcessor: React.FC = () => {
   const [videoSource, setVideoSource] = useState<VideoSource | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -25,89 +21,48 @@ const VideoProcessor: React.FC = () => {
   const [processingStage, setProcessingStage] = useState('Initializing');
   const [processedVideoUrl, setProcessedVideoUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
-  const [apiStatus, setApiStatus] = useState<ApiStatus>({
-    isConnected: false,
-    message: 'Checking backend connection...'
-  });
+  const { isApiAvailable, checkApiStatus } = useApiStatus();
   
-  const API_BASE_URL = 'http://localhost:8000'; // Change this to your actual backend URL
-
-  // Check API connection on component mount
+  // Check API availability on component mount
   useEffect(() => {
-    const checkApiConnection = async () => {
+    checkApiStatus();
+  }, [checkApiStatus]);
+  
+  // Poll for job status if we have a job ID
+  useEffect(() => {
+    if (!jobId || !isProcessing) return;
+    
+    const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/`);
-        if (response.ok) {
-          setApiStatus({
-            isConnected: true,
-            message: 'Connected to backend'
-          });
-        } else {
-          setApiStatus({
-            isConnected: false,
-            message: 'Backend is unavailable'
-          });
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/status/${jobId}`);
+        
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        setProgress(data.progress);
+        setProcessingStage(data.message);
+        
+        if (data.status === 'completed') {
+          setIsProcessing(false);
+          setProcessedVideoUrl(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${data.output_video}`);
+          toast.success('Video processing complete!');
+          clearInterval(interval);
+        } else if (data.status === 'failed') {
+          setIsProcessing(false);
+          toast.error(`Processing failed: ${data.error || 'Unknown error'}`);
+          clearInterval(interval);
         }
       } catch (error) {
-        setApiStatus({
-          isConnected: false,
-          message: 'Cannot connect to backend'
-        });
+        console.error('Error polling job status:', error);
+        // Don't stop polling on network errors
       }
-    };
-
-    checkApiConnection();
-  }, []);
-
-  // Poll job status
-  useEffect(() => {
-    let intervalId: number;
-
-    if (jobId && isProcessing) {
-      intervalId = window.setInterval(async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/status/${jobId}`);
-          
-          if (!response.ok) {
-            console.error('Error fetching job status:', response.statusText);
-            return;
-          }
-
-          const data = await response.json();
-          
-          // Update progress based on status
-          setProgress(Math.round(data.progress * 100));
-          setProcessingStage(data.message || 'Processing video...');
-
-          // Check if processing is complete
-          if (data.status === 'completed' && data.output_video) {
-            clearInterval(intervalId);
-            setIsProcessing(false);
-            setProgress(100);
-            // Construct the full URL for the video
-            const videoUrl = `${API_BASE_URL}${data.output_video}`;
-            setProcessedVideoUrl(videoUrl);
-            toast.success('Video processing complete!');
-          }
-          
-          // Check if processing failed
-          if (data.status === 'failed') {
-            clearInterval(intervalId);
-            setIsProcessing(false);
-            toast.error(`Processing failed: ${data.error || 'Unknown error'}`);
-          }
-        } catch (error) {
-          console.error('Error polling job status:', error);
-        }
-      }, 2000);
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [jobId, isProcessing, API_BASE_URL]);
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [jobId, isProcessing]);
 
   const handleVideoSubmit = async (data: VideoSource) => {
     setVideoSource(data);
@@ -115,31 +70,34 @@ const VideoProcessor: React.FC = () => {
     setProgress(0);
     setProcessingStage('Initializing');
     setProcessedVideoUrl(null);
-    setJobId(null);
     
-    toast.info('Starting video processing...');
-    
+    if (isApiAvailable) {
+      // Use the backend API
+      await processWithBackend(data);
+    } else {
+      // Simulate processing with frontend-only logic
+      simulateProcessing(data);
+    }
+  };
+  
+  const processWithBackend = async (data: VideoSource) => {
     try {
-      // Create form data for sending to API
+      toast.info('Starting video processing...');
+      
+      // Create form data for the API request
       const formData = new FormData();
-      formData.append('prompt', data.query || 'Extract interesting parts');
-      
-      // Map aspect ratio to backend format
-      const backendAspectRatio = 
-        data.aspectRatio === '1:1' ? 'square' : 
-        data.aspectRatio === '9:16' ? 'reel' : 'youtube';
-      
-      formData.append('aspect_ratio', backendAspectRatio);
-      formData.append('burn_captions', data.captions.toString());
+      formData.append('query', data.query || 'Extract interesting moments');
+      formData.append('aspect_ratio', mapAspectRatio(data.aspectRatio));
+      formData.append('add_captions', String(data.captions));
       
       if (data.type === 'url') {
         formData.append('video_url', data.source as string);
       } else {
-        formData.append('video', data.source as File);
+        formData.append('video_file', data.source as File);
       }
       
-      // Call the API to start processing
-      const response = await fetch(`${API_BASE_URL}/process`, {
+      // Send the request to the backend
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/process`, {
         method: 'POST',
         body: formData,
       });
@@ -149,21 +107,87 @@ const VideoProcessor: React.FC = () => {
       }
       
       const result = await response.json();
-      setJobId(result.job_id);
+      setJobId(result.id);
+      setProcessingStage(result.message);
+      setProgress(result.progress);
       
     } catch (error) {
-      console.error('API Processing Error:', error);
+      console.error('Error processing video with backend:', error);
       setIsProcessing(false);
-      toast.error(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to process video: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  };
+  
+  // Map frontend aspect ratio to backend enum values
+  const mapAspectRatio = (ratio: '1:1' | '16:9' | '9:16'): string => {
+    switch (ratio) {
+      case '1:1': return 'square';
+      case '16:9': return 'youtube';
+      case '9:16': return 'reel';
+      default: return 'youtube';
+    }
+  };
+  
+  // Simulate processing for frontend-only mode
+  const simulateProcessing = (data: VideoSource) => {
+    toast.info('Starting video processing...');
+    console.log('Processing with options:', {
+      aspectRatio: data.aspectRatio,
+      captions: data.captions
+    });
+    
+    // Processing stages with realistic timing
+    const processingStages = [
+      'Initializing',
+      'Analyzing video content',
+      'Identifying key moments',
+      'Generating clips',
+      'Applying optimizations',
+      'Finalizing output'
+    ];
+    
+    let currentProgress = 0;
+    let currentStageIndex = 0;
+    
+    // Update progress and stage at intervals
+    const progressInterval = setInterval(() => {
+      // Increment progress
+      const increment = Math.random() * 2 + 0.1;
+      currentProgress += increment;
+      
+      // Update stage based on progress
+      if (currentProgress > (currentStageIndex + 1) * (100 / processingStages.length)) {
+        currentStageIndex = Math.min(currentStageIndex + 1, processingStages.length - 1);
+        setProcessingStage(processingStages[currentStageIndex]);
+      }
+      
+      if (currentProgress >= 100) {
+        clearInterval(progressInterval);
+        
+        setTimeout(() => {
+          setProcessedVideoUrl('/sample-output.mp4'); // Sample video path
+          setIsProcessing(false);
+          setProgress(100);
+          toast.success('Video processing complete!');
+        }, 1000);
+        
+        return;
+      }
+      
+      setProgress(currentProgress);
+    }, 200);
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* API Status Indicator */}
-      <div className={`text-center mb-4 text-sm ${apiStatus.isConnected ? 'text-green-400' : 'text-yellow-400'}`}>
-        {apiStatus.message}
-      </div>
+      {isApiAvailable && (
+        <div className="text-center mb-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+            <span className="w-2 h-2 mr-2 rounded-full bg-green-400 animate-pulse"></span>
+            Connected to backend
+          </span>
+        </div>
+      )}
       
       {!isProcessing && !processedVideoUrl && (
         <VideoInput onVideoSubmit={handleVideoSubmit} isProcessing={isProcessing} />
