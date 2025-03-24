@@ -67,12 +67,18 @@ export default {
 					dark: '#0F0F0F',
 					darker: '#050505',
 					light: '#FFFFFF',
-					accent: '#3AAFA9',
-					'accent-light': '#5ECECA',
-					'accent-dark': '#2B7A78',
+					accent: '#7c3aed', // Purple
+					'accent-light': '#9d5cf7',
+					'accent-dark': '#6d28d9',
 					muted: '#4A4A4A',
 					border: '#333333'
 				}
+			},
+			fontFamily: {
+				'sans': ['Inter', 'sans-serif'],
+				'mono': ['JetBrains Mono', 'monospace'],
+				'montserrat': ['Montserrat', 'sans-serif'],
+				'inter': ['Inter', 'sans-serif']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -132,12 +138,8 @@ export default {
 			backdropBlur: {
 				'xs': '2px',
 			},
-			fontFamily: {
-				'sans': ['Inter', 'sans-serif'],
-				'mono': ['JetBrains Mono', 'monospace']
-			},
 			boxShadow: {
-				'glow': '0 0 20px rgba(58, 175, 169, 0.3)',
+				'glow': '0 0 20px rgba(124, 58, 237, 0.3)',
 				'glass': '0 4px 24px rgba(0, 0, 0, 0.2)'
 			}
 		}

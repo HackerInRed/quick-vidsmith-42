@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UploadStep } from './UploadStep';
 import { EditOptionsStep } from './EditOptionsStep';
@@ -199,14 +198,17 @@ export const UploadProcessor = () => {
 
           {/* Step indicators */}
           <div className="mb-8">
-            <div className="flex justify-between items-center">
-              {['upload', 'options', 'processing', 'result'].map((step, index) => (
-                <React.Fragment key={step}>
-                  <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
+              <div className="flex w-full max-w-2xl justify-between items-center relative">
+                {/* Connecting line in the center */}
+                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-700 transform -translate-y-1/2 z-0"></div>
+                
+                {['upload', 'options', 'processing', 'result'].map((step, index) => (
+                  <div key={step} className="z-10 flex flex-col items-center">
                     <div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center
+                      className={`w-10 h-10 rounded-full flex items-center justify-center
                       ${currentStep === step 
-                        ? 'bg-vidsmith-accent text-white' 
+                        ? 'bg-purple-600 text-white' 
                         : ((['upload', 'options', 'processing'].indexOf(currentStep) >= ['upload', 'options', 'processing', 'result'].indexOf(step))
                           ? 'bg-green-500 text-white'
                           : 'bg-gray-700 text-gray-400')}`
@@ -224,18 +226,8 @@ export const UploadProcessor = () => {
                       {step.charAt(0).toUpperCase() + step.slice(1)}
                     </span>
                   </div>
-                  
-                  {index < 3 && (
-                    <div 
-                      className={`flex-1 h-0.5 ${
-                        ['upload', 'options', 'processing'].indexOf(currentStep) > index 
-                          ? 'bg-green-500' 
-                          : 'bg-gray-700'
-                      }`}
-                    ></div>
-                  )}
-                </React.Fragment>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
