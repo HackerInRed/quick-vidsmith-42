@@ -12,7 +12,9 @@ export const UploadHero = () => {
           transition={{ duration: 0.5 }}
           className="max-w-3xl mx-auto text-center"
         >
-          {/* "AI Video Editor" text removed as requested */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+            AI <span className="text-vidsmith-accent">Video Editor</span>
+          </h1>
         </motion.div>
       </div>
     </section>
