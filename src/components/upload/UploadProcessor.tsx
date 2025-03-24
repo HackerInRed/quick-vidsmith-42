@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UploadStep } from './UploadStep';
 import { EditOptionsStep } from './EditOptionsStep';
@@ -197,12 +196,15 @@ export const UploadProcessor = () => {
             </div>
           )}
 
-          {/* Step indicators */}
+          {/* Step indicators with centered timeline */}
           <div className="mb-8">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center relative">
+              {/* Center line - positioned absolutely */}
+              <div className="absolute left-1/2 transform -translate-x-1/2 top-4 w-3/4 h-0.5 bg-gray-700 z-0"></div>
+              
               {['upload', 'options', 'processing', 'result'].map((step, index) => (
                 <React.Fragment key={step}>
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center z-10">
                     <div 
                       className={`w-8 h-8 rounded-full flex items-center justify-center
                       ${currentStep === step 
@@ -224,16 +226,6 @@ export const UploadProcessor = () => {
                       {step.charAt(0).toUpperCase() + step.slice(1)}
                     </span>
                   </div>
-                  
-                  {index < 3 && (
-                    <div 
-                      className={`flex-1 h-0.5 ${
-                        ['upload', 'options', 'processing'].indexOf(currentStep) > index 
-                          ? 'bg-green-500' 
-                          : 'bg-gray-700'
-                      }`}
-                    ></div>
-                  )}
                 </React.Fragment>
               ))}
             </div>

@@ -17,8 +17,6 @@ const Layout: React.FC<LayoutProps> = ({ children, fullWidth = false }) => {
             <Logo />
           </Link>
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors">How It Works</a>
             <Link to="/upload" className="btn-primary">Get Started</Link>
           </nav>
           <button className="block md:hidden text-white">
