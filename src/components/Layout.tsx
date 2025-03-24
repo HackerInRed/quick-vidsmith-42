@@ -5,13 +5,14 @@ import Logo from './Logo';
 
 interface LayoutProps {
   children: React.ReactNode;
+  fullWidth?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, fullWidth = false }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-vidsmith-border backdrop-blur-sm bg-vidsmith-darker/70 sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className={`mx-auto px-4 py-4 flex items-center justify-between ${fullWidth ? 'w-full' : 'container'}`}>
           <Link to="/">
             <Logo />
           </Link>
@@ -34,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
       <footer className="border-t border-vidsmith-border py-6">
         <div className="container mx-auto px-4 text-center text-gray-400 text-sm">
-          <p>© {new Date().getFullYear()} VidSmith. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} CreAItive. All rights reserved.</p>
         </div>
       </footer>
     </div>
