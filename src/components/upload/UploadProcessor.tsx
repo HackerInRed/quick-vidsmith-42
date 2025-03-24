@@ -197,45 +197,123 @@ export const UploadProcessor = () => {
             </div>
           )}
 
-          {/* Step indicators */}
+          {/* Step indicators - Updated to match the image */}
           <div className="mb-8">
-            <div className="flex justify-between items-center">
-              {['upload', 'options', 'processing', 'result'].map((step, index) => (
-                <React.Fragment key={step}>
-                  <div className="flex flex-col items-center">
-                    <div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center
-                      ${currentStep === step 
-                        ? 'bg-vidsmith-accent text-white' 
-                        : ((['upload', 'options', 'processing'].indexOf(currentStep) >= ['upload', 'options', 'processing', 'result'].indexOf(step))
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-700 text-gray-400')}`
-                      }
-                    >
-                      {(['upload', 'options', 'processing'].indexOf(currentStep) >= ['upload', 'options', 'processing', 'result'].indexOf(step)) && step !== currentStep ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    <span className={`text-xs mt-2 ${currentStep === step ? 'text-white' : 'text-gray-400'}`}>
-                      {step.charAt(0).toUpperCase() + step.slice(1)}
-                    </span>
-                  </div>
-                  
-                  {index < 3 && (
-                    <div 
-                      className={`flex-1 h-0.5 ${
-                        ['upload', 'options', 'processing'].indexOf(currentStep) > index 
-                          ? 'bg-green-500' 
-                          : 'bg-gray-700'
-                      }`}
-                    ></div>
+            <div className="flex items-center">
+              {/* Step 1 - Upload */}
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center
+                    ${currentStep === 'upload' 
+                      ? 'bg-vidsmith-accent text-white' 
+                      : (currentStep === 'options' || currentStep === 'processing' || currentStep === 'result') 
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-700 text-gray-400'
+                    }`}
+                >
+                  {(currentStep === 'options' || currentStep === 'processing' || currentStep === 'result') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ) : (
+                    "1"
                   )}
-                </React.Fragment>
-              ))}
+                </div>
+                <span className={`text-xs mt-2 ${currentStep === 'upload' ? 'text-white' : 'text-gray-400'}`}>
+                  Upload
+                </span>
+              </div>
+              
+              {/* Line 1-2 */}
+              <div 
+                className={`flex-1 h-0.5 mx-2 ${
+                  currentStep === 'options' || currentStep === 'processing' || currentStep === 'result' 
+                    ? 'bg-green-500' 
+                    : 'bg-gray-700'
+                }`}
+              ></div>
+              
+              {/* Step 2 - Options */}
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center
+                    ${currentStep === 'options' 
+                      ? 'bg-vidsmith-accent text-white' 
+                      : (currentStep === 'processing' || currentStep === 'result') 
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-700 text-gray-400'
+                    }`}
+                >
+                  {(currentStep === 'processing' || currentStep === 'result') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ) : (
+                    "2"
+                  )}
+                </div>
+                <span className={`text-xs mt-2 ${currentStep === 'options' ? 'text-white' : 'text-gray-400'}`}>
+                  Options
+                </span>
+              </div>
+              
+              {/* Line 2-3 */}
+              <div 
+                className={`flex-1 h-0.5 mx-2 ${
+                  currentStep === 'processing' || currentStep === 'result' 
+                    ? 'bg-green-500' 
+                    : 'bg-gray-700'
+                }`}
+              ></div>
+              
+              {/* Step 3 - Processing */}
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center
+                    ${currentStep === 'processing' 
+                      ? 'bg-vidsmith-accent text-white' 
+                      : currentStep === 'result' 
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-700 text-gray-400'
+                    }`}
+                >
+                  {currentStep === 'result' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ) : (
+                    "3"
+                  )}
+                </div>
+                <span className={`text-xs mt-2 ${currentStep === 'processing' ? 'text-white' : 'text-gray-400'}`}>
+                  Processing
+                </span>
+              </div>
+              
+              {/* Line 3-4 */}
+              <div 
+                className={`flex-1 h-0.5 mx-2 ${
+                  currentStep === 'result' 
+                    ? 'bg-green-500' 
+                    : 'bg-gray-700'
+                }`}
+              ></div>
+              
+              {/* Step 4 - Result */}
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center
+                    ${currentStep === 'result' 
+                      ? 'bg-vidsmith-accent text-white' 
+                      : 'bg-gray-700 text-gray-400'
+                    }`}
+                >
+                  4
+                </div>
+                <span className={`text-xs mt-2 ${currentStep === 'result' ? 'text-white' : 'text-gray-400'}`}>
+                  Result
+                </span>
+              </div>
             </div>
           </div>
 
