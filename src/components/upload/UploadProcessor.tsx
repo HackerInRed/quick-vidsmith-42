@@ -42,14 +42,19 @@ export const UploadProcessor = () => {
     const checkApiStatus = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/status/test`, { 
+        const response = await fetch(`${apiUrl}/`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: AbortSignal.timeout(5000) // Timeout after 5 seconds
         });
         
-        setIsApiAvailable(response.ok);
-        console.log('API status check:', response.ok ? 'available' : 'unavailable');
+        if (response.ok) {
+          setIsApiAvailable(true);
+          console.log('API is available');
+        } else {
+          setIsApiAvailable(false);
+          console.log('API status check: unavailable, status:', response.status);
+        }
       } catch (error) {
         console.log('API not available:', error);
         setIsApiAvailable(false);
@@ -57,6 +62,9 @@ export const UploadProcessor = () => {
     };
     
     checkApiStatus();
+    // Poll the API status every 10 seconds
+    const intervalId = setInterval(checkApiStatus, 10000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleFileUpload = async (selectedFile: File) => {
@@ -140,7 +148,9 @@ export const UploadProcessor = () => {
       
       // Setup websocket connection for real-time updates if supported
       if ('WebSocket' in window) {
-        const websocketUrl = `${apiUrl.replace('http', 'ws')}/ws/${jobId}`;
+        const websocketUrl = `${apiUrl.replace('http:', 'ws:')}/ws/${jobId}`;
+        console.log('Attempting WebSocket connection to:', websocketUrl);
+        
         const socket = new WebSocket(websocketUrl);
         
         socket.onopen = () => {
@@ -148,16 +158,21 @@ export const UploadProcessor = () => {
         };
         
         socket.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          setJobStatus(data);
-          
-          if (data.status === 'complete' && data.output_path) {
-            setOutputUrl(`${apiUrl}/output/${jobId}`);
-            setCurrentStep('result');
-            socket.close();
-          } else if (data.status === 'error') {
-            toast.error(`Processing error: ${data.error || 'Unknown error'}`);
-            socket.close();
+          try {
+            const data = JSON.parse(event.data);
+            console.log('WebSocket message received:', data);
+            setJobStatus(data);
+            
+            if (data.status === 'complete' && data.output_path) {
+              setOutputUrl(`${apiUrl}/output/${jobId}`);
+              setCurrentStep('result');
+              socket.close();
+            } else if (data.status === 'error') {
+              toast.error(`Processing error: ${data.error || 'Unknown error'}`);
+              socket.close();
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err, event.data);
           }
         };
         
@@ -165,6 +180,10 @@ export const UploadProcessor = () => {
           console.error('WebSocket error:', error);
           // Fall back to polling
           startPolling(jobId);
+        };
+        
+        socket.onclose = () => {
+          console.log('WebSocket connection closed');
         };
         
         return;
@@ -181,16 +200,19 @@ export const UploadProcessor = () => {
 
   const startPolling = (jobId: string) => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    console.log('Starting polling for job status:', jobId);
     
     const pollInterval = setInterval(async () => {
       try {
         const response = await fetch(`${apiUrl}/status/${jobId}`);
         
         if (!response.ok) {
-          throw new Error(`API Error: ${response.status}`);
+          console.error('Error polling job status, status code:', response.status);
+          return;
         }
         
         const data = await response.json();
+        console.log('Poll status update:', data);
         setJobStatus(data);
         
         if (data.status === 'complete' && data.output_path) {
@@ -228,7 +250,7 @@ export const UploadProcessor = () => {
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                Backend API is not available. Some features may be limited.
+                Backend API is not available at http://localhost:8000. Please check your connection.
               </p>
             </div>
           )}
