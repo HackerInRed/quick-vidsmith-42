@@ -197,9 +197,9 @@ export const UploadProcessor = () => {
             </div>
           )}
 
-          {/* Step indicators - Updated to match the image */}
+          {/* Step indicators - Updated to center the lines */}
           <div className="mb-8">
-            <div className="flex items-center">
+            <div className="flex items-center justify-center">
               {/* Step 1 - Upload */}
               <div className="flex flex-col items-center">
                 <div 
@@ -226,7 +226,7 @@ export const UploadProcessor = () => {
               
               {/* Line 1-2 */}
               <div 
-                className={`flex-1 h-0.5 mx-2 ${
+                className={`w-20 h-0.5 mx-2 ${
                   currentStep === 'options' || currentStep === 'processing' || currentStep === 'result' 
                     ? 'bg-green-500' 
                     : 'bg-gray-700'
@@ -259,7 +259,7 @@ export const UploadProcessor = () => {
               
               {/* Line 2-3 */}
               <div 
-                className={`flex-1 h-0.5 mx-2 ${
+                className={`w-20 h-0.5 mx-2 ${
                   currentStep === 'processing' || currentStep === 'result' 
                     ? 'bg-green-500' 
                     : 'bg-gray-700'
@@ -292,7 +292,7 @@ export const UploadProcessor = () => {
               
               {/* Line 3-4 */}
               <div 
-                className={`flex-1 h-0.5 mx-2 ${
+                className={`w-20 h-0.5 mx-2 ${
                   currentStep === 'result' 
                     ? 'bg-green-500' 
                     : 'bg-gray-700'
