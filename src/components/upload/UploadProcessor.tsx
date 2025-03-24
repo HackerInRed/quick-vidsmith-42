@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UploadStep } from './UploadStep';
 import { EditOptionsStep } from './EditOptionsStep';
@@ -34,7 +33,6 @@ export const UploadProcessor = () => {
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
   const { isApiAvailable, checkApiStatus } = useApiStatus();
   
-  // Check if the API is available on component mount
   useEffect(() => {
     checkApiStatus();
   }, [checkApiStatus]);
@@ -50,11 +48,9 @@ export const UploadProcessor = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      // Create form data for file upload only
       const formData = new FormData();
       formData.append('video', selectedFile);
       
-      // Upload the file without starting processing
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
         body: formData,
@@ -72,7 +68,6 @@ export const UploadProcessor = () => {
       setJobId(result.job_id);
       toast.success('Video uploaded successfully');
       
-      // Move to options step
       setCurrentStep('options');
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -91,14 +86,12 @@ export const UploadProcessor = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      // Send processing options to the separate process endpoint
       const processingData = {
         query: videoOptions.query,
-        aspectRatio: videoOptions.aspectRatio, // The backend will map this
+        aspectRatio: videoOptions.aspectRatio,
         captions: videoOptions.burnCaptions
       };
       
-      // Start processing with options
       const response = await fetch(`${apiUrl}/process/${jobId}`, {
         method: 'POST',
         headers: {
@@ -119,7 +112,6 @@ export const UploadProcessor = () => {
         message: 'Processing started'
       });
       
-      // Start polling for job status
       startPolling(jobId);
     } catch (error) {
       console.error('Error starting processing:', error);
@@ -140,14 +132,13 @@ export const UploadProcessor = () => {
         
         const data = await response.json();
         
-        // Map the backend response to our JobStatusType
         const updatedStatus: JobStatusType = {
           ...jobStatus,
           status: data.status === 'Completed' ? 'complete' : 
                   data.status.startsWith('Failed') ? 'error' : 'processing',
           progress: calculateProgress(data.status),
           message: data.status,
-          error: data.status.startsWith('Failed') ? data.status.substring(8) : undefined // Extract error message
+          error: data.status.startsWith('Failed') ? data.status.substring(8) : undefined
         };
         
         setJobStatus(updatedStatus);
@@ -163,7 +154,6 @@ export const UploadProcessor = () => {
         }
       } catch (error) {
         console.error('Error polling job status:', error);
-        // Don't stop polling on network errors
       }
     }, 2000);
   };
@@ -197,22 +187,26 @@ export const UploadProcessor = () => {
             </div>
           )}
 
-          {/* Step indicators */}
           <div className="mb-8">
-            <div className="flex justify-between items-center">
-              {['upload', 'options', 'processing', 'result'].map((step, index) => (
-                <React.Fragment key={step}>
-                  <div className="flex flex-col items-center">
+            <div className="flex justify-between items-center relative">
+              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-700 -translate-y-1/2 z-0"></div>
+              
+              {['upload', 'options', 'processing', 'result'].map((step, index) => {
+                const isActive = step === currentStep;
+                const isComplete = ['upload', 'options', 'processing'].indexOf(currentStep) >= ['upload', 'options', 'processing', 'result'].indexOf(step);
+                
+                return (
+                  <div key={step} className="flex flex-col items-center z-10">
                     <div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center
-                      ${currentStep === step 
-                        ? 'bg-vidsmith-accent text-white' 
-                        : ((['upload', 'options', 'processing'].indexOf(currentStep) >= ['upload', 'options', 'processing', 'result'].indexOf(step))
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-700 text-gray-400')}`
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300
+                      ${isActive 
+                        ? 'bg-vidsmith-accent border-vidsmith-accent text-white' 
+                        : (isComplete && step !== currentStep)
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : 'bg-gray-800 border-gray-700 text-gray-400'}`
                       }
                     >
-                      {(['upload', 'options', 'processing'].indexOf(currentStep) >= ['upload', 'options', 'processing', 'result'].indexOf(step)) && step !== currentStep ? (
+                      {(isComplete && step !== currentStep) ? (
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -220,26 +214,15 @@ export const UploadProcessor = () => {
                         index + 1
                       )}
                     </div>
-                    <span className={`text-xs mt-2 ${currentStep === step ? 'text-white' : 'text-gray-400'}`}>
+                    <span className={`text-xs mt-2 ${isActive ? 'text-white font-medium' : 'text-gray-400'}`}>
                       {step.charAt(0).toUpperCase() + step.slice(1)}
                     </span>
                   </div>
-                  
-                  {index < 3 && (
-                    <div 
-                      className={`flex-1 h-0.5 ${
-                        ['upload', 'options', 'processing'].indexOf(currentStep) > index 
-                          ? 'bg-green-500' 
-                          : 'bg-gray-700'
-                      }`}
-                    ></div>
-                  )}
-                </React.Fragment>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          {/* Content based on current step */}
           <div className="glass-panel p-6 rounded-lg">
             {currentStep === 'upload' && (
               <UploadStep onFileSelected={handleFileUpload} />
@@ -270,7 +253,6 @@ export const UploadProcessor = () => {
   );
 };
 
-// Helper function to calculate progress based on status message
 const calculateProgress = (status: string): number => {
   if (status === 'Uploaded') return 10;
   if (status === 'Extracting audio') return 20;
@@ -281,6 +263,5 @@ const calculateProgress = (status: string): number => {
   if (status === 'Completed') return 100;
   if (status.startsWith('Failed')) return 0;
   
-  // Default progress
   return 50;
 };
