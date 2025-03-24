@@ -39,24 +39,22 @@ const VideoProcessor: React.FC = () => {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/status/${jobId}`);
         
         if (!response.ok) {
-          console.log(`API Error: ${response.status}`, await response.text());
-          return;
+          throw new Error(`API Error: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Job status:', data);
         
         setProgress(data.progress * 100); // Convert progress from 0-1 to 0-100
         setProcessingStage(data.message || 'Processing...');
         
-        if (data.status === 'complete') {
+        if (data.status === 'completed') {
           setIsProcessing(false);
           // Use the full URL for video output
           const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
           setProcessedVideoUrl(`${apiUrl}/output/${jobId}`);
           toast.success('Video processing complete!');
           clearInterval(interval);
-        } else if (data.status === 'error') {
+        } else if (data.status === 'failed') {
           setIsProcessing(false);
           toast.error(`Processing failed: ${data.error || 'Unknown error'}`);
           clearInterval(interval);
@@ -92,46 +90,29 @@ const VideoProcessor: React.FC = () => {
       
       // Create form data for the API request
       const formData = new FormData();
+      formData.append('prompt', data.query || 'Extract interesting moments');
+      formData.append('aspect_ratio', mapAspectRatio(data.aspectRatio));
+      formData.append('burn_captions', String(data.captions));
       
       if (data.type === 'file') {
-        formData.append('file', data.source as File);
+        formData.append('video', data.source as File);
       }
       
-      // First, upload the file
+      // Send the request to the backend
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const uploadResponse = await fetch(`${apiUrl}/upload`, {
+      const response = await fetch(`${apiUrl}/process`, {
         method: 'POST',
         body: formData,
       });
       
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text();
-        throw new Error(`API Error (${uploadResponse.status}): ${errorText}`);
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
       
-      const uploadResult = await uploadResponse.json();
-      const fileId = uploadResult.job_id;
-      setJobId(fileId);
-      
-      // Then start the processing
-      const processResponse = await fetch(`${apiUrl}/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_id: fileId,
-          query: data.query || 'Extract interesting moments',
-          aspect_ratio: mapAspectRatio(data.aspectRatio),
-          burn_captions: data.captions
-        }),
-      });
-      
-      if (!processResponse.ok) {
-        const errorText = await processResponse.text();
-        throw new Error(`API Error (${processResponse.status}): ${errorText}`);
-      }
-      
-      const processResult = await processResponse.json();
-      console.log('Processing started:', processResult);
+      const result = await response.json();
+      setJobId(result.job_id);
+      setProcessingStage(result.message || 'Processing started');
+      setProgress(0); // Start at 0%, will be updated by polling
       
     } catch (error) {
       console.error('Error processing video with backend:', error);
