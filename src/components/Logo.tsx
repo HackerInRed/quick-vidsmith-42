@@ -1,14 +1,12 @@
 
 import React from 'react';
 
-const Logo = () => {
+export const Logo = ({ className = '' }: { className?: string }) => {
   return (
-    <div className="flex items-center">
-      <div className="text-2xl font-bold tracking-tight">
-        <span className="text-white">Cre</span>
-        <span className="text-vidsmith-accent">AI</span>
-        <span className="text-white">tive</span>
-      </div>
+    <div className={`flex items-center ${className}`}>
+      <span className="text-white font-bold text-xl">
+        Cre<span className="text-vidsmith-accent">AI</span>tive
+      </span>
     </div>
   );
 };

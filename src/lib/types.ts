@@ -26,4 +26,9 @@ export interface JobStatusType {
   progress: number;
   message: string;
   error?: string;
+  filename?: string;
+  video_path?: string;
+  output_video?: string;
+  srt_path?: string;
+  timestamp?: number;
 }

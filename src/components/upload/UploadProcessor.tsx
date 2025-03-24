@@ -9,7 +9,7 @@ import { JobStatusType } from '../../lib/types';
 import { useApiStatus } from '../../hooks/useApiStatus';
 
 export type UploadStepType = 'upload' | 'options' | 'processing' | 'result';
-export type AspectRatioType = 'youtube' | 'square' | 'reel';
+export type AspectRatioType = '16:9' | '1:1' | '9:16';
 
 export interface VideoOptions {
   query: string;
@@ -23,7 +23,7 @@ export const UploadProcessor = () => {
   const [jobId, setJobId] = useState<string | null>(null);
   const [options, setOptions] = useState<VideoOptions>({
     query: '',
-    aspectRatio: 'youtube',
+    aspectRatio: '16:9',
     burnCaptions: true
   });
   const [jobStatus, setJobStatus] = useState<JobStatusType>({
@@ -50,11 +50,11 @@ export const UploadProcessor = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      // Create form data
+      // Create form data for file upload only
       const formData = new FormData();
       formData.append('video', selectedFile);
       
-      // Upload the file
+      // Upload the file without starting processing
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
         body: formData,
@@ -65,7 +65,12 @@ export const UploadProcessor = () => {
       }
       
       const result = await response.json();
+      if (!result.job_id) {
+        throw new Error('No job ID returned from server');
+      }
+      
       setJobId(result.job_id);
+      toast.success('Video uploaded successfully');
       
       // Move to options step
       setCurrentStep('options');
@@ -86,38 +91,36 @@ export const UploadProcessor = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      // The Flask backend accepts the options directly in the upload route, 
-      // so we need to create a new FormData and upload again with the options
-      const formData = new FormData();
+      // Send processing options to the separate process endpoint
+      const processingData = {
+        query: videoOptions.query,
+        aspectRatio: videoOptions.aspectRatio, // The backend will map this
+        captions: videoOptions.burnCaptions
+      };
       
-      if (file) {
-        formData.append('video', file);
-      } else {
-        toast.error('File is missing. Please upload a file first.');
-        return;
-      }
-      
-      formData.append('query', videoOptions.query);
-      formData.append('aspectRatio', videoOptions.aspectRatio);
-      formData.append('burnCaptions', String(videoOptions.burnCaptions));
-      
-      // Upload with options
-      const response = await fetch(`${apiUrl}/upload`, {
+      // Start processing with options
+      const response = await fetch(`${apiUrl}/process/${jobId}`, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(processingData),
       });
       
       if (!response.ok) {
         throw new Error(`API Error: ${response.status}`);
       }
       
-      const result = await response.json();
-      // Update job ID with the new one
-      setJobId(result.job_id);
       setCurrentStep('processing');
+      setJobStatus({
+        ...jobStatus,
+        status: 'processing',
+        progress: 5,
+        message: 'Processing started'
+      });
       
       // Start polling for job status
-      startPolling(result.job_id);
+      startPolling(jobId);
     } catch (error) {
       console.error('Error starting processing:', error);
       toast.error(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -139,6 +142,7 @@ export const UploadProcessor = () => {
         
         // Map the backend response to our JobStatusType
         const updatedStatus: JobStatusType = {
+          ...jobStatus,
           status: data.status === 'Completed' ? 'complete' : 
                   data.status.startsWith('Failed') ? 'error' : 'processing',
           progress: calculateProgress(data.status),
@@ -152,6 +156,7 @@ export const UploadProcessor = () => {
           setOutputUrl(`${apiUrl}/output/${currentJobId}`);
           setCurrentStep('result');
           clearInterval(pollInterval);
+          toast.success('Video processing complete!');
         } else if (data.status.startsWith('Failed')) {
           toast.error(`Processing error: ${data.status}`);
           clearInterval(pollInterval);

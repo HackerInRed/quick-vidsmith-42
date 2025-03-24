@@ -82,8 +82,8 @@ export const EditOptionsStep: React.FC<EditOptionsStepProps> = ({ initialOptions
             <motion.div 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={aspectRatioOptionStyles('youtube')}
-              onClick={() => setAspectRatio('youtube')}
+              className={aspectRatioOptionStyles('16:9')}
+              onClick={() => setAspectRatio('16:9')}
             >
               <Monitor className="w-10 h-6" />
             </motion.div>
@@ -91,8 +91,8 @@ export const EditOptionsStep: React.FC<EditOptionsStepProps> = ({ initialOptions
             <motion.div 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={aspectRatioOptionStyles('square')}
-              onClick={() => setAspectRatio('square')}
+              className={aspectRatioOptionStyles('1:1')}
+              onClick={() => setAspectRatio('1:1')}
             >
               <Square className="w-8 h-8" />
             </motion.div>
@@ -100,8 +100,8 @@ export const EditOptionsStep: React.FC<EditOptionsStepProps> = ({ initialOptions
             <motion.div 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={aspectRatioOptionStyles('reel')}
-              onClick={() => setAspectRatio('reel')}
+              className={aspectRatioOptionStyles('9:16')}
+              onClick={() => setAspectRatio('9:16')}
             >
               <Smartphone className="w-5 h-10" />
             </motion.div>
