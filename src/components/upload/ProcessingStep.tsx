@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Progress } from "../ui/progress";
-import { JobStatusType } from './UploadProcessor';
+import { JobStatusType } from '../../lib/types';
 import { motion } from 'framer-motion';
 
 interface ProcessingStepProps {
@@ -102,7 +102,7 @@ export const ProcessingStep: React.FC<ProcessingStepProps> = ({ jobStatus }) => 
           );
         })}
         
-        {jobStatus.status === 'error' && (
+        {jobStatus.error && (
           <div className="text-red-400 mt-4">
             Error: {jobStatus.error || 'An unknown error occurred'}
           </div>

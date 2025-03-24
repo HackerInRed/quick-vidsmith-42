@@ -19,3 +19,11 @@ export interface VideoOutput {
   thumbnailUrl?: string;
   duration?: number;
 }
+
+export interface JobStatusType {
+  job_id?: string;
+  status: string;
+  progress: number;
+  message: string;
+  error?: string;
+}

@@ -5,6 +5,8 @@ import { EditOptionsStep } from './EditOptionsStep';
 import { ProcessingStep } from './ProcessingStep';
 import { ResultStep } from './ResultStep';
 import { toast } from 'sonner';
+import { JobStatusType } from '../../lib/types';
+import { useApiStatus } from '../../hooks/useApiStatus';
 
 export type UploadStepType = 'upload' | 'options' | 'processing' | 'result';
 export type AspectRatioType = 'youtube' | 'square' | 'reel';
@@ -13,17 +15,6 @@ export interface VideoOptions {
   query: string;
   aspectRatio: AspectRatioType;
   burnCaptions: boolean;
-}
-
-export interface JobStatusType {
-  status: string;
-  filename?: string;
-  query?: string;
-  aspect_ratio?: string;
-  burn_captions?: boolean;
-  timestamp?: number;
-  output_video?: string;
-  srt_path?: string;
 }
 
 export const UploadProcessor = () => {
@@ -35,31 +26,18 @@ export const UploadProcessor = () => {
     aspectRatio: 'youtube',
     burnCaptions: true
   });
-  const [jobStatus, setJobStatus] = useState<JobStatusType | null>(null);
+  const [jobStatus, setJobStatus] = useState<JobStatusType>({
+    status: 'idle',
+    progress: 0,
+    message: 'Ready to process'
+  });
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
-  const [isApiAvailable, setIsApiAvailable] = useState<boolean>(false);
+  const { isApiAvailable, checkApiStatus } = useApiStatus();
   
   // Check if the API is available on component mount
   useEffect(() => {
-    const checkApiStatus = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiUrl}/jobs`, { 
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-          signal: AbortSignal.timeout(5000) // Timeout after 5 seconds
-        });
-        
-        setIsApiAvailable(response.ok);
-        console.log('API status check:', response.ok ? 'available' : 'unavailable');
-      } catch (error) {
-        console.log('API not available:', error);
-        setIsApiAvailable(false);
-      }
-    };
-    
     checkApiStatus();
-  }, []);
+  }, [checkApiStatus]);
 
   const handleFileUpload = async (selectedFile: File) => {
     setFile(selectedFile);
@@ -158,7 +136,17 @@ export const UploadProcessor = () => {
         }
         
         const data = await response.json();
-        setJobStatus(data);
+        
+        // Map the backend response to our JobStatusType
+        const updatedStatus: JobStatusType = {
+          status: data.status === 'Completed' ? 'complete' : 
+                  data.status.startsWith('Failed') ? 'error' : 'processing',
+          progress: calculateProgress(data.status),
+          message: data.status,
+          error: data.status.startsWith('Failed') ? data.status.substring(8) : undefined // Extract error message
+        };
+        
+        setJobStatus(updatedStatus);
         
         if (data.status === 'Completed') {
           setOutputUrl(`${apiUrl}/output/${currentJobId}`);
@@ -178,7 +166,11 @@ export const UploadProcessor = () => {
   const resetProcess = () => {
     setFile(null);
     setJobId(null);
-    setJobStatus(null);
+    setJobStatus({
+      status: 'idle',
+      progress: 0,
+      message: 'Ready to process'
+    });
     setOutputUrl(null);
     setCurrentStep('upload');
   };
@@ -256,15 +248,8 @@ export const UploadProcessor = () => {
               />
             )}
             
-            {currentStep === 'processing' && jobStatus && (
-              <ProcessingStep 
-                jobStatus={{
-                  job_id: jobId || '',
-                  status: jobStatus.status === 'Completed' ? 'complete' : 'processing',
-                  progress: jobStatus.status === 'Completed' ? 100 : calculateProgress(jobStatus.status),
-                  message: jobStatus.status
-                }}
-              />
+            {currentStep === 'processing' && (
+              <ProcessingStep jobStatus={jobStatus} />
             )}
             
             {currentStep === 'result' && outputUrl && (
