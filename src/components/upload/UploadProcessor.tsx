@@ -181,7 +181,7 @@ export const UploadProcessor = () => {
   };
 
   return (
-    <section className="w-full py-6 md:py-12">
+    <section className="w-full">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {!isApiAvailable && (
@@ -197,7 +197,7 @@ export const UploadProcessor = () => {
             </div>
           )}
 
-          {/* Step indicators - Updated to center the lines */}
+          {/* Process Steps Indicator */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
               {/* Step 1 - Upload */}
@@ -224,14 +224,16 @@ export const UploadProcessor = () => {
                 </span>
               </div>
               
-              {/* Line 1-2 */}
-              <div 
-                className={`w-20 h-0.5 mx-2 ${
-                  currentStep === 'options' || currentStep === 'processing' || currentStep === 'result' 
-                    ? 'bg-green-500' 
-                    : 'bg-gray-700'
-                }`}
-              ></div>
+              {/* Connecting Line 1-2 */}
+              <div className="relative w-16 mx-1">
+                <div 
+                  className={`absolute top-1/2 transform -translate-y-1/2 w-full h-0.5 ${
+                    currentStep === 'options' || currentStep === 'processing' || currentStep === 'result' 
+                      ? 'bg-green-500' 
+                      : 'bg-gray-700'
+                  }`}
+                ></div>
+              </div>
               
               {/* Step 2 - Options */}
               <div className="flex flex-col items-center">
@@ -257,14 +259,16 @@ export const UploadProcessor = () => {
                 </span>
               </div>
               
-              {/* Line 2-3 */}
-              <div 
-                className={`w-20 h-0.5 mx-2 ${
-                  currentStep === 'processing' || currentStep === 'result' 
-                    ? 'bg-green-500' 
-                    : 'bg-gray-700'
-                }`}
-              ></div>
+              {/* Connecting Line 2-3 */}
+              <div className="relative w-16 mx-1">
+                <div 
+                  className={`absolute top-1/2 transform -translate-y-1/2 w-full h-0.5 ${
+                    currentStep === 'processing' || currentStep === 'result' 
+                      ? 'bg-green-500' 
+                      : 'bg-gray-700'
+                  }`}
+                ></div>
+              </div>
               
               {/* Step 3 - Processing */}
               <div className="flex flex-col items-center">
@@ -290,14 +294,16 @@ export const UploadProcessor = () => {
                 </span>
               </div>
               
-              {/* Line 3-4 */}
-              <div 
-                className={`w-20 h-0.5 mx-2 ${
-                  currentStep === 'result' 
-                    ? 'bg-green-500' 
-                    : 'bg-gray-700'
-                }`}
-              ></div>
+              {/* Connecting Line 3-4 */}
+              <div className="relative w-16 mx-1">
+                <div 
+                  className={`absolute top-1/2 transform -translate-y-1/2 w-full h-0.5 ${
+                    currentStep === 'result' 
+                      ? 'bg-green-500' 
+                      : 'bg-gray-700'
+                  }`}
+                ></div>
+              </div>
               
               {/* Step 4 - Result */}
               <div className="flex flex-col items-center">
