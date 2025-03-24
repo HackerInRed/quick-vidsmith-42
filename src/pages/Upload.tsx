@@ -13,7 +13,7 @@ const Upload = () => {
               Create <span className="text-vidsmith-accent">Smart Clips</span> with AI
             </h1>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Upload a video or paste a URL and let our AI generate engaging clips optimized for social media.
+              Upload a video and let our AI generate engaging clips optimized for social media.
             </p>
           </div>
 

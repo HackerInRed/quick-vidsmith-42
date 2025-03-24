@@ -1,17 +1,26 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export const useApiStatus = () => {
   const [isApiAvailable, setIsApiAvailable] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   
   const checkApiStatus = useCallback(async () => {
+    // Skip if we're already checking to prevent multiple simultaneous requests
+    if (isChecking) return;
+    
+    setIsChecking(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
       const response = await fetch(`${apiUrl}/`, { 
         method: 'GET',
-        // Adding a timeout to prevent long hangs
-        signal: AbortSignal.timeout(5000)
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (response.ok) {
         setIsApiAvailable(true);
@@ -22,9 +31,20 @@ export const useApiStatus = () => {
       }
     } catch (error) {
       setIsApiAvailable(false);
-      console.log('Backend API is not available:', error);
+      if (error instanceof Error) {
+        console.log('Backend API is not available:', error.message);
+      } else {
+        console.log('Backend API is not available, unknown error');
+      }
+    } finally {
+      setIsChecking(false);
     }
-  }, []);
+  }, [isChecking]);
+  
+  // Initial check on mount
+  useEffect(() => {
+    checkApiStatus();
+  }, [checkApiStatus]);
   
   return { isApiAvailable, checkApiStatus };
 };

@@ -7,8 +7,8 @@ import { toast } from 'sonner';
 import { useApiStatus } from '../hooks/useApiStatus';
 
 interface VideoSource {
-  type: 'url' | 'file';
-  source: string | File;
+  type: 'file';
+  source: File;
   query: string;
   aspectRatio: '1:1' | '16:9' | '9:16';
   captions: boolean;
@@ -26,6 +26,8 @@ const VideoProcessor: React.FC = () => {
   // Check API availability on component mount
   useEffect(() => {
     checkApiStatus();
+    const intervalId = setInterval(checkApiStatus, 10000); // Check every 10 seconds
+    return () => clearInterval(intervalId);
   }, [checkApiStatus]);
   
   // Poll for job status if we have a job ID
@@ -42,12 +44,14 @@ const VideoProcessor: React.FC = () => {
         
         const data = await response.json();
         
-        setProgress(data.progress);
-        setProcessingStage(data.message);
+        setProgress(data.progress * 100); // Convert progress from 0-1 to 0-100
+        setProcessingStage(data.message || 'Processing...');
         
         if (data.status === 'completed') {
           setIsProcessing(false);
-          setProcessedVideoUrl(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${data.output_video}`);
+          // Use the full URL for video output
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+          setProcessedVideoUrl(`${apiUrl}/output/${jobId}`);
           toast.success('Video processing complete!');
           clearInterval(interval);
         } else if (data.status === 'failed') {
@@ -86,18 +90,17 @@ const VideoProcessor: React.FC = () => {
       
       // Create form data for the API request
       const formData = new FormData();
-      formData.append('query', data.query || 'Extract interesting moments');
+      formData.append('prompt', data.query || 'Extract interesting moments');
       formData.append('aspect_ratio', mapAspectRatio(data.aspectRatio));
-      formData.append('add_captions', String(data.captions));
+      formData.append('burn_captions', String(data.captions));
       
-      if (data.type === 'url') {
-        formData.append('video_url', data.source as string);
-      } else {
-        formData.append('video_file', data.source as File);
+      if (data.type === 'file') {
+        formData.append('video', data.source as File);
       }
       
       // Send the request to the backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/process`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/process`, {
         method: 'POST',
         body: formData,
       });
@@ -107,9 +110,9 @@ const VideoProcessor: React.FC = () => {
       }
       
       const result = await response.json();
-      setJobId(result.id);
-      setProcessingStage(result.message);
-      setProgress(result.progress);
+      setJobId(result.job_id);
+      setProcessingStage(result.message || 'Processing started');
+      setProgress(0); // Start at 0%, will be updated by polling
       
     } catch (error) {
       console.error('Error processing video with backend:', error);
@@ -128,9 +131,9 @@ const VideoProcessor: React.FC = () => {
     }
   };
   
-  // Simulate processing for frontend-only mode
+  // Simulate processing for frontend-only mode (when backend is unavailable)
   const simulateProcessing = (data: VideoSource) => {
-    toast.info('Starting video processing...');
+    toast.info('Starting video processing (simulation mode)...');
     console.log('Processing with options:', {
       aspectRatio: data.aspectRatio,
       captions: data.captions
@@ -168,7 +171,7 @@ const VideoProcessor: React.FC = () => {
           setProcessedVideoUrl('/sample-output.mp4'); // Sample video path
           setIsProcessing(false);
           setProgress(100);
-          toast.success('Video processing complete!');
+          toast.success('Video processing complete! (simulation)');
         }, 1000);
         
         return;

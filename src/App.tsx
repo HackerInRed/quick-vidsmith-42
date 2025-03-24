@@ -9,6 +9,7 @@ import Upload from "./pages/Upload";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 
+// Create a new query client instance
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -20,8 +21,6 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -29,6 +28,8 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        <Toaster />
+        <Sonner />
       </TooltipProvider>
     </QueryClientProvider>
   );
