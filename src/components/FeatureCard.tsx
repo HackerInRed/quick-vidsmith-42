@@ -1,34 +1,22 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { LucideIcon } from 'lucide-react';
 
 interface FeatureCardProps {
-  icon: React.ElementType;
+  icon: LucideIcon;
   title: string;
   description: string;
-  delay?: number;
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ 
-  icon: Icon, 
-  title, 
-  description,
-  delay = 0 
-}) => {
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-      className="glass-panel rounded-lg p-6 hover:shadow-glow transition-all duration-300"
-    >
-      <div className="rounded-full w-12 h-12 bg-vidsmith-accent/20 flex items-center justify-center mb-4">
-        <Icon className="h-6 w-6 text-vidsmith-accent" />
+    <div className="glass-panel p-6 transition-all duration-300 hover:shadow-glow hover:border-vidsmith-accent">
+      <div className="w-12 h-12 bg-vidsmith-accent/20 text-vidsmith-accent rounded-lg flex items-center justify-center mb-4">
+        <Icon size={24} />
       </div>
-      <h3 className="text-xl font-bold mb-2">{title}</h3>
-      <p className="text-gray-300">{description}</p>
-    </motion.div>
+      <h3 className="text-lg font-medium text-white mb-2">{title}</h3>
+      <p className="text-gray-400 text-sm">{description}</p>
+    </div>
   );
 };
 
