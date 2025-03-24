@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Video } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner'; // Import toast from sonner
 
 interface UploadStepProps {
   onFileSelected: (file: File) => void;
